@@ -44,6 +44,34 @@ The command names are:
 To see results of `List images that are not linked by your notes`, you may want to open Developer Tools by pressing
 Ctrl+Shift+I in Windows and Linux, or Cmd-Option-I on macOS.
 
+## Development
+
+Install dependencies, build the plugin, and deploy the generated files directly to a local vault:
+
+```shell
+npm install
+npm run build
+npm run deploy -- "C:/path/to/your/vault"
+```
+
+The vault path can also be provided through the `OBSIDIAN_VAULT` environment variable. The deploy command installs
+`main.js`, `manifest.json`, and `styles.css` under `.obsidian/plugins/awesome-image/`. Enable **Awesome Image** in
+Obsidian's community plugins after the first deployment. Restart Obsidian after changing `manifest.json`; for source
+changes, rebuild and reload the plugin.
+
+## Release
+
+Keep the version in `manifest.json`, `package.json`, and `versions.json` synchronized, commit the changes, and push an
+annotated tag with the same version. Pushing the tag starts the GitHub Actions release workflow, which builds the
+plugin and creates a draft release with `main.js`, `manifest.json`, and `styles.css` attached.
+
+```shell
+git tag -a 0.1.4 -m "0.1.4"
+git push origin 0.1.4
+```
+
+Review the draft release and publish it manually after adding release notes.
+
 ## How it works
 
 When Process images:

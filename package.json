@@ -8,6 +8,7 @@
     "dev": "rollup --config rollup.config.js -w",
     "build": "npm run clean && rollup --config rollup.config.js --environment BUILD:production && shx cp build/main.js ./",
     "release": "npm run build && shx cp styles.css manifest.json build",
+    "deploy": "node scripts/deploy.mjs",
     "version": "json -I -f manifest.json -e \"this.version='$npm_package_version'\" && json -I -f versions.json -e \"this['$npm_package_version']='$(cat manifest.json | json minAppVersion)'\" && git add ."
   },
   "keywords": [],
@@ -38,7 +39,6 @@
     "install": "^0.13.0",
     "is-svg": "^4.3.2",
     "npm": "^8.16.0",
-    "rollup-plugin-execute": "^1.1.1",
     "safe-regex": "^2.1.1",
     "shx": "^0.3.4",
     "@simonwep/pickr": "^1.8.2",
