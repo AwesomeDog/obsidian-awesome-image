@@ -46,10 +46,12 @@ Ctrl+Shift+I in Windows and Linux, or Cmd-Option-I on macOS.
 
 ## Development
 
-Install dependencies, build the plugin, and deploy the generated files directly to a local vault:
+Development requires Node.js 22 or newer. Install dependencies, run the checks and build the plugin, then deploy the
+generated files directly to a local vault:
 
 ```shell
 npm install
+npm test
 npm run build
 npm run deploy -- "C:/path/to/your/vault"
 ```

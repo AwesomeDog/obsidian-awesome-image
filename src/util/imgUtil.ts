@@ -1,160 +1,129 @@
-import {Notice} from 'obsidian';
-import {t} from 'src/lang/helpers';
-import {OffsetSizeIto} from 'src/to/commonTo';
-import {ImgCto, ImgInfoIto} from 'src/to/imgTo';
-import {IMG_VIEW_MIN, ZOOM_FACTOR} from '../conf/constants'
+import {Notice} from "obsidian";
+import {t} from "../lang/helpers";
+import {OffsetSizeIto} from "../to/commonTo";
+import {ImgCto, ImgInfoIto} from "../to/imgTo";
+import {IMG_VIEW_MIN, ZOOM_FACTOR} from "../conf/constants";
 
-/**
- * Image utility class
- */
 export class ImgUtil {
+  static calculateImgZoomSize(realImg: HTMLImageElement, image: ImgCto): ImgCto {
+    const windowWidth = document.documentElement.clientWidth || document.body.clientWidth;
+    const windowHeight = (document.documentElement.clientHeight || document.body.clientHeight) - 100;
+    const maxWidth = windowWidth * ZOOM_FACTOR;
+    const maxHeight = windowHeight * ZOOM_FACTOR;
+    let width = realImg.width;
+    let height = realImg.height;
 
-    public static calculateImgZoomSize = (realImg: HTMLImageElement, imgCto: ImgCto): ImgCto => {
-        const windowWidth = document.documentElement.clientWidth || document.body.clientWidth;
-        const windowHeight = (document.documentElement.clientHeight || document.body.clientHeight) - 100;
-        const windowZoomWidth = windowWidth * ZOOM_FACTOR;
-        const windowZoomHeight = windowHeight * ZOOM_FACTOR;
+    if (height > maxHeight) {
+      height = maxHeight;
+      width = Math.min(height / realImg.height * realImg.width, maxWidth);
+    } else if (width > maxWidth) {
+      width = maxWidth;
+      height = width / realImg.width * realImg.height;
+    }
+    height = width * realImg.height / realImg.width;
+    Object.assign(image, {
+      left: (windowWidth - width) / 2,
+      top: (windowHeight - height) / 2,
+      curWidth: width,
+      curHeight: height,
+      realWidth: realImg.width,
+      realHeight: realImg.height,
+    });
+    return image;
+  }
 
-        let tempWidth = realImg.width, tempHeight = realImg.height;
-        if (realImg.height > windowZoomHeight) {
-            tempHeight = windowZoomHeight;
-            if ((tempWidth = tempHeight / realImg.height * realImg.width) > windowZoomWidth) {
-                tempWidth = windowZoomWidth;
-            }
-        } else if (realImg.width > windowZoomWidth) {
-            tempWidth = windowZoomWidth;
-            tempHeight = tempWidth / realImg.width * realImg.height;
-        }
-        tempHeight = tempWidth * realImg.height / realImg.width;
-        // cache image info: curWidth, curHeight, realWidth, realHeight, left, top
-        imgCto.left = (windowWidth - tempWidth) / 2;
-        imgCto.top = (windowHeight - tempHeight) / 2;
-        imgCto.curWidth = tempWidth;
-        imgCto.curHeight = tempHeight;
-        imgCto.realWidth = realImg.width;
-        imgCto.realHeight = realImg.height;
-
-        /* console.log('calculateImgZoomSize', 'realImg: ' + realImg.width + ',' + realImg.height,
-            'tempSize: ' + tempWidth + ',' + tempHeight,
-            'windowZoomSize: ' + windowZoomWidth + ',' + windowZoomHeight,
-            'windowSize: ' + windowWidth + ',' + windowHeight); */
-        return imgCto;
+  static zoom(
+    ratio: number | null,
+    image: ImgCto,
+    offsetSize: OffsetSizeIto = {offsetX: 0, offsetY: 0},
+    actualSize = false,
+  ): ImgCto {
+    let zoomRatio = 1;
+    if (!actualSize) {
+      const value = ratio ?? 0;
+      const factor = value > 0 ? 1 + value : 1 / (1 - value);
+      ratio = factor;
+      zoomRatio = image.curWidth * factor / image.realWidth;
     }
 
-    /**
-     * zoom an image
-     * @param ratio
-     * @param targetImgInfo
-     * @param offsetSize
-     * @param actualSize
-     * @returns
-     */
-    public static zoom = (ratio: number, targetImgInfo: ImgCto, offsetSize?: OffsetSizeIto, actualSize?: boolean): ImgCto => {
-        let zoomRatio: number;
-        if (!actualSize) {
-            const zoomInFlag = ratio > 0;
-            ratio = zoomInFlag ? 1 + ratio : 1 / (1 - ratio);
-            zoomRatio = targetImgInfo.curWidth * ratio / targetImgInfo.realWidth;
-        }
-
-        // Snap to 100% zoom when we pass over it
-        const curRatio = targetImgInfo.curWidth / targetImgInfo.realWidth;
-        if (actualSize || (curRatio < 1 && zoomRatio > 1) || (curRatio > 1 && zoomRatio < 1)) {
-            // set zoom ratio to 100%
-            zoomRatio = 1;
-            // reduce snap offset ratio accordingly
-            ratio = 1 / curRatio;
-        }
-
-        let newWidth = targetImgInfo.realWidth * zoomRatio;
-        let newHeight = targetImgInfo.realHeight * zoomRatio;
-        if (IMG_VIEW_MIN >= newWidth || IMG_VIEW_MIN >= newHeight) {
-            // set minimum width or height
-            if (IMG_VIEW_MIN >= newWidth) {
-                newWidth = IMG_VIEW_MIN;
-                newHeight = (newWidth * targetImgInfo.realHeight) / targetImgInfo.realWidth;
-            } else {
-                newHeight = IMG_VIEW_MIN;
-                newWidth = (newHeight * targetImgInfo.realWidth) / targetImgInfo.realHeight;
-            }
-            ratio = 1;
-        }
-        const left = targetImgInfo.left + offsetSize.offsetX * (1 - ratio);
-        const top = targetImgInfo.top + offsetSize.offsetY * (1 - ratio);
-        // cache image info: curWidth, curHeight, left, top
-        targetImgInfo.curWidth = newWidth;
-        targetImgInfo.curHeight = newHeight;
-        targetImgInfo.left = left;
-        targetImgInfo.top = top;
-        // return { newWidth, left, top };
-        return targetImgInfo;
+    const currentRatio = image.curWidth / image.realWidth;
+    if (actualSize || (currentRatio < 1 && zoomRatio > 1) || (currentRatio > 1 && zoomRatio < 1)) {
+      zoomRatio = 1;
+      ratio = 1 / currentRatio;
     }
 
-    public static transform = (targetImgInfo: ImgCto) => {
-        let transform = 'rotate(' + targetImgInfo.rotate + 'deg)';
-        if (targetImgInfo.scaleX) {
-            transform += ' scaleX(-1)'
-        }
-        if (targetImgInfo.scaleY) {
-            transform += ' scaleY(-1)'
-        }
-        targetImgInfo.imgViewEl.style.setProperty('transform', transform);
+    let width = image.realWidth * zoomRatio;
+    let height = image.realHeight * zoomRatio;
+    if (IMG_VIEW_MIN >= width || IMG_VIEW_MIN >= height) {
+      if (IMG_VIEW_MIN >= width) {
+        width = IMG_VIEW_MIN;
+        height = width * image.realHeight / image.realWidth;
+      } else {
+        height = IMG_VIEW_MIN;
+        width = height * image.realWidth / image.realHeight;
+      }
+      ratio = 1;
     }
+    Object.assign(image, {
+      curWidth: width,
+      curHeight: height,
+      left: image.left + offsetSize.offsetX * (1 - (ratio ?? 0)),
+      top: image.top + offsetSize.offsetY * (1 - (ratio ?? 0)),
+    });
+    return image;
+  }
 
-    public static rotate = (degree: number, targetImgInfo: ImgInfoIto) => {
-        targetImgInfo.imgViewEl.style.setProperty('transform', 'rotate(' + (targetImgInfo.rotate += degree) + 'deg)');
-    }
+  static transform(image: ImgCto): void {
+    image.imgViewEl.style.transform =
+      "rotate(" + image.rotate + "deg)" +
+      (image.scaleX ? " scaleX(-1)" : "") + (image.scaleY ? " scaleY(-1)" : "");
+  }
 
-    public static invertImgColor = (imgEle: HTMLImageElement, open: boolean) => {
-        if (open) {
-            imgEle.style.setProperty('filter', 'invert(1) hue-rotate(180deg)');
-            imgEle.style.setProperty('mix-blend-mode', 'screen');
-        } else {
-            imgEle.style.setProperty('filter', 'none');
-            imgEle.style.setProperty('mix-blend-mode', 'normal');
-        }
-        // open ? imgEle.addClass('image-toolkit-img-invert') : imgEle.removeClass('image-toolkit-img-invert');
-    }
+  static rotate(degree: number, image: ImgInfoIto): void {
+    image.imgViewEl.style.transform = "rotate(" + (image.rotate += degree) + "deg)";
+  }
 
-    public static copyText(text: string) {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                //console.log('copyText:', copyText);
-            })
-            .catch(err => {
-                console.error('copy text error', err);
-            });
-    }
+  static invertImgColor(image: HTMLImageElement, enabled: boolean): void {
+    image.style.filter = enabled ? "invert(1) hue-rotate(180deg)" : "none";
+    image.style.mixBlendMode = enabled ? "screen" : "normal";
+  }
 
-    public static copyImage(imgEle: HTMLImageElement, width: number, height: number) {
-        let image = new Image();
-        image.crossOrigin = 'anonymous';
-        image.src = imgEle.src;
-        image.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = image.width;
-            canvas.height = image.height;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(image, 0, 0);
-            try {
-                canvas.toBlob(async (blob: any) => {
-                    await navigator.clipboard.write([new ClipboardItem({"image/png": blob})])
-                        .then(() => {
-                            new Notice(t("COPY_IMAGE_SUCCESS"));
-                        }, () => {
-                            new Notice(t("COPY_IMAGE_ERROR"));
-                        });
-                });
-            } catch (error) {
-                new Notice(t("COPY_IMAGE_ERROR"));
-                console.error(error);
-            }
-        };
-        image.onerror = () => {
+  static copyText(text: string): void {
+    navigator.clipboard.writeText(text).catch((error) => console.error("copy text error", error));
+  }
+
+  static copyImage(image: HTMLImageElement, _width: number, _height: number): void {
+    const source = new Image();
+    source.crossOrigin = "anonymous";
+    source.src = image.src;
+    source.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = source.width;
+      canvas.height = source.height;
+      const context = canvas.getContext("2d");
+      if (!context) {
+        new Notice(t("COPY_IMAGE_ERROR"));
+        return;
+      }
+      context.fillStyle = "#fff";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(source, 0, 0);
+      try {
+        canvas.toBlob(async (blob) => {
+          try {
+            if (!blob) throw new Error("Unable to encode image");
+            await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
+            new Notice(t("COPY_IMAGE_SUCCESS"));
+          } catch (error) {
             new Notice(t("COPY_IMAGE_ERROR"));
-        }
-    }
-
+            console.error(error);
+          }
+        });
+      } catch (error) {
+        new Notice(t("COPY_IMAGE_ERROR"));
+        console.error(error);
+      }
+    };
+    source.onerror = () => new Notice(t("COPY_IMAGE_ERROR"));
+  }
 }

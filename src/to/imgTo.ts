@@ -1,170 +1,122 @@
-/**
- * typescript class object for defining operating status of the image
- */
+export type Timer = ReturnType<typeof setTimeout>;
+
 export class ImgStatusCto {
-    // true: the popup layer of viewing image is displayed
-    popup: boolean = false;
-    // whether the image is being dragged
-    dragging: boolean = false;
-
-    // keybord pressing status
-    arrowUp: boolean = false;
-    arrowDown: boolean = false;
-    arrowLeft: boolean = false;
-    arrowRight: boolean = false;
-
-    fullScreen: boolean = false;
-
-    // being dragged
-    activeImg: ImgCto;
-    activeImgZIndex: number = 0;
-
-    clickCount: number = 0;
-    clickTimer: NodeJS.Timeout;
+  popup = false;
+  dragging = false;
+  arrowUp = false;
+  arrowDown = false;
+  arrowLeft = false;
+  arrowRight = false;
+  fullScreen = false;
+  activeImg: ImgCto | null = null;
+  activeImgZIndex = 0;
+  clickCount = 0;
+  clickTimer: Timer | null = null;
 }
 
-/**
- * typescript object of interface for defining image's information
- */
 export interface ImgInfoIto {
-    oitContainerViewEl: HTMLDivElement; // 'oit-main-container-view', 'oit-pin-container-view'
-    imgViewEl: HTMLImageElement;
-    imgTitleEl: HTMLDivElement;
-    imgTipEl: HTMLDivElement;
-    imgTipTimeout?: NodeJS.Timeout;
-    imgFooterEl: HTMLElement;
-    imgPlayerEl: HTMLDivElement; // 'img-player'
-    imgPlayerImgViewEl: HTMLImageElement; // 'img-fullscreen'
-
-    curWidth: number;
-    curHeight: number;
-    realWidth: number;
-    realHeight: number;
-    left: number;
-    top: number;
-    moveX: number;
-    moveY: number;
-    rotate: number;
-
-    invertColor: boolean;
-    scaleX: boolean;
-    scaleY: boolean;
-
-    // whether the image is being previewed in full-screen mode
-    fullScreen: boolean;
+  oitContainerViewEl: HTMLDivElement;
+  imgViewEl: HTMLImageElement;
+  imgTitleEl: HTMLDivElement;
+  imgTipEl: HTMLDivElement;
+  imgTipTimeout?: Timer;
+  imgFooterEl: HTMLElement;
+  imgPlayerEl: HTMLDivElement;
+  imgPlayerImgViewEl: HTMLImageElement;
+  curWidth: number;
+  curHeight: number;
+  realWidth: number;
+  realHeight: number;
+  left: number;
+  top: number;
+  moveX: number;
+  moveY: number;
+  rotate: number;
+  invertColor: boolean;
+  scaleX: boolean;
+  scaleY: boolean;
+  fullScreen: boolean;
 }
 
 export class ImgInfoCto {
-    oitContainerViewEl: HTMLDivElement; // 'oit-main-container-view', 'oit-pin-container-view'
-    imgContainerEl: HTMLDivElement; // 'img-container': including <img class='img-view' src='' alt=''>
+  oitContainerViewEl: HTMLDivElement | null = null;
+  imgContainerEl: HTMLDivElement | null = null;
+  imgViewEl: HTMLImageElement | null = null;
+  imgTitleEl: HTMLDivElement | null = null;
+  imgTitleNameEl: HTMLSpanElement | null = null;
+  imgTitleIndexEl: HTMLSpanElement | null = null;
+  imgTipEl: HTMLDivElement | null = null;
+  imgTipTimeout: Timer | null = null;
+  imgFooterEl: HTMLElement | null = null;
+  imgPlayerEl: HTMLDivElement | null = null;
+  imgPlayerImgViewEl: HTMLImageElement | null = null;
+  imgList: ImgCto[] = [];
 
-    imgTitleEl: HTMLDivElement; // 'img-title'
-    imgTitleNameEl: HTMLSpanElement; // 'img-title-name'
-    imgTitleIndexEl: HTMLSpanElement; // 'img-title-index'
-
-    imgTipEl: HTMLDivElement; // 'img-tip': show the zoom ratio
-    imgTipTimeout?: NodeJS.Timeout; // timer: control the display time of 'img-tip'
-    imgFooterEl: HTMLElement; // 'img-footer': including 'img-title', 'img-toolbar', 'gallery-navbar'
-    imgPlayerEl: HTMLDivElement; // 'img-player': including <img class="img-fullscreen" src='' alt=''>
-    imgPlayerImgViewEl: HTMLImageElement; // 'img-fullscreen'
-
-    imgList: Array<ImgCto> = new Array<ImgCto>();
-
-    public getPopupImgNum = (): number => {
-        let num: number = 0;
-        for (const imgCto of this.imgList) {
-            if (imgCto.popup) num++;
-        }
-        return num;
-    }
+  getPopupImgNum(): number {
+    return this.imgList.filter(({popup}) => popup).length;
+  }
 }
 
 export class ImgCto {
-    index: number;
-    mtime: number; // modified time
-    popup: boolean = false;
+  popup = false;
+  zIndex = 0;
+  curWidth = 0;
+  curHeight = 0;
+  realWidth = 0;
+  realHeight = 0;
+  left = 0;
+  top = 0;
+  moveX = 0;
+  moveY = 0;
+  rotate = 0;
+  invertColor = false;
+  scaleX = false;
+  scaleY = false;
+  fullScreen = false;
+  targetOriginalImgEl: HTMLImageElement | null = null;
+  imgViewEl: HTMLImageElement;
+  refreshImgInterval: Timer | null = null;
+  defaultImgStyle: Pick<CSSStyleDeclaration, "transform" | "filter" | "mixBlendMode" | "borderWidth" | "borderStyle" | "borderColor"> = {
+    transform: "none",
+    filter: "none",
+    mixBlendMode: "normal",
+    borderWidth: "",
+    borderStyle: "",
+    borderColor: "",
+  };
 
-    targetOriginalImgEl: HTMLImageElement;
-
-    imgViewEl: HTMLImageElement; // 'img-view'
-    refreshImgInterval: NodeJS.Timeout;
-    zIndex: number = 0;
-
-    curWidth: number = 0; // image's current width
-    curHeight: number = 0;
-    realWidth: number = 0; // image's real width
-    realHeight: number = 0;
-    left: number = 0; // margin-left
-    top: number = 0; // margin-top
-    moveX: number = 0; // 鼠标相对于图片的位置
-    moveY: number = 0;
-
-    rotate: number = 0; // rotateDeg
-    invertColor: boolean = false;
-    scaleX: boolean = false; // scaleX(-1)
-    scaleY: boolean = false; // scaleY(-1)
-    fullScreen: boolean = false; // whether the image is being previewed in full-screen mode
-
-    defaultImgStyle = {
-        transform: 'none',
-        filter: 'none',
-        mixBlendMode: 'normal',
-
-        borderWidth: '',
-        borderStyle: '',
-        borderColor: ''
-    }
-
-    constructor();
-    constructor(index: number, mtime: number, imgViewEl: HTMLImageElement);
-    constructor(index?: number, mtime?: number, imgViewEl?: HTMLImageElement) {
-        this.index = index;
-        this.mtime = mtime;
-        this.imgViewEl = imgViewEl;
-    }
+  constructor(public index = 0, public mtime = 0, imgViewEl?: HTMLImageElement) {
+    this.imgViewEl = imgViewEl!;
+  }
 }
 
-/**
- * typescript class object for defining image's settings
- */
 export interface ImgSettingIto {
-    // viewImageGlobal: boolean; // @Deprecated
-    viewImageEditor: boolean;
-    viewImageInCPB: boolean;
-    viewImageWithALink: boolean;
-    viewImageOther: boolean;
-
-    // PIN MODE
-    pinMode: boolean;
-    pinMaximum: number;
-    pinCoverMode: boolean; // cover the earliest image which is being popped up
-
-    // VIEW DETAIL
-    imageMoveSpeed: number;
-    imgTipToggle: boolean;
-    imgFullScreenMode: string;
-    imgViewBackgroundColor: string;
-
-    imageBorderToggle: boolean;
-    imageBorderWidth: string;
-    imageBorderStyle: string;
-    imageBorderColor: string;
-
-    galleryNavbarToggle: boolean;
-    galleryNavbarDefaultColor: string;
-    galleryNavbarHoverColor: string;
-    galleryImgBorderActive: boolean;
-    galleryImgBorderActiveColor: string;
-
-    // hotkeys conf
-    moveTheImageHotkey: string;
-    switchTheImageHotkey: string;
-    doubleClickToolbar: string;
-    viewTriggerHotkey: string;
-
-    // for org
-    realTimeUpdate: boolean;
-    excludedFolders: string[];
-    includedFileRegex: string;
-    mediaRootDirectory: string;
+  viewImageEditor: boolean;
+  viewImageInCPB: boolean;
+  viewImageWithALink: boolean;
+  viewImageOther: boolean;
+  pinMode: boolean;
+  pinMaximum: number;
+  pinCoverMode: boolean;
+  imageMoveSpeed: number;
+  imgTipToggle: boolean;
+  imgFullScreenMode: string;
+  imgViewBackgroundColor: string;
+  imageBorderToggle: boolean;
+  imageBorderWidth: string;
+  imageBorderStyle: string;
+  imageBorderColor: string;
+  galleryNavbarToggle: boolean;
+  galleryNavbarDefaultColor: string;
+  galleryNavbarHoverColor: string;
+  galleryImgBorderActive: boolean;
+  galleryImgBorderActiveColor: string;
+  moveTheImageHotkey: string;
+  switchTheImageHotkey: string;
+  doubleClickToolbar: string;
+  viewTriggerHotkey: string;
+  realTimeUpdate: boolean;
+  excludedFolders: string[];
+  includedFileRegex: string;
+  mediaRootDirectory: string;
 }

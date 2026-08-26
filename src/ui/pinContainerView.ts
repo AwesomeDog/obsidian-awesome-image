@@ -1,124 +1,82 @@
-import {CONTAINER_TYPE} from "src/conf/constants";
-import ImageToolkitPlugin from "src/main";
-import {ContainerView} from "./containerView";
+import type {ContainerType} from "../conf/constants";
+import type ImageToolkitPlugin from "../main";
 import {ImgCto} from "../to/imgTo";
+import {ContainerView} from "./containerView";
 import {MenuView} from "./menuView";
 
-/**
- * PinContainerView: Pin an image on the top
- * @Support: move an image by mouse; close an image by Esc
- * @Nonsupport: move an image by keyboard; display gallery navbar
- */
 export class PinContainerView extends ContainerView {
+  constructor(plugin: ImageToolkitPlugin, containerType: ContainerType) {
+    super(plugin, containerType, plugin.settings.pinMaximum);
+    this.setMenuView(new MenuView(this));
+  }
 
-    constructor(plugin: ImageToolkitPlugin, containerType: keyof typeof CONTAINER_TYPE) {
-        super(plugin, containerType, plugin.settings.pinMaximum);
-        this.setMenuView(new MenuView(this));
+  override setActiveImgForMouseEvent(imgCto: ImgCto | null): void {
+    this.imgGlobalStatus.activeImg = imgCto;
+  }
+
+  override initContainerViewDom(containerEl: HTMLElement): ImgCto {
+    if (!this.imgInfoCto.oitContainerViewEl) {
+      const root = createDiv("oit-pin-container-view");
+      const container = createDiv("img-container");
+      const tip = createDiv("img-tip");
+      const player = createDiv("img-player");
+      const playerImage = createEl("img");
+      this.imgInfoCto.oitContainerViewEl = root;
+      this.imgInfoCto.imgContainerEl = container;
+      this.imgInfoCto.imgTipEl = tip;
+      this.imgInfoCto.imgPlayerEl = player;
+      this.imgInfoCto.imgPlayerImgViewEl = playerImage;
+      tip.hidden = true;
+      playerImage.addClass("img-fullscreen");
+      player.append(playerImage);
+      root.append(container, tip, player);
+      containerEl.append(root);
     }
+    this.updateImgViewElAndList(this.pinMaximum);
+    return this.getMatchedImg()!;
+  }
 
-    public setActiveImgForMouseEvent(imgCto: ImgCto): void {
-        this.imgGlobalStatus.activeImg = imgCto;
+  override openOitContainerView(matchedImg: ImgCto): void {
+    const root = this.imgInfoCto.oitContainerViewEl;
+    if (!root) {
+      console.error("obsidian-image-toolkit: container view is not initialized");
+      return;
     }
-
-    //region ================== Container View ========================
-    public initContainerViewDom = (containerEl: HTMLElement): ImgCto => {
-        /*
-        <div class="oit-pin-container-view">
-          <div class="img-container">
-            <img class="img-view" data-index='0' src="" alt="">
-            <img class="img-view" data-index='1' src="" alt="">
-            ...
-          </div>
-        </div>
-         */
-        if (!this.imgInfoCto.oitContainerViewEl) { // init at first time
-            // create: <div class="oit-pin-container-view">
-            containerEl.appendChild(this.imgInfoCto.oitContainerViewEl = createDiv('oit-pin-container-view'));
-            // <div class="oit-pin-container-view"> <div class="img-container"/> </div>
-            this.imgInfoCto.oitContainerViewEl.append(this.imgInfoCto.imgContainerEl = createDiv('img-container'));
-
-            // <div class="img-tip"></div>
-            this.imgInfoCto.oitContainerViewEl.appendChild(this.imgInfoCto.imgTipEl = createDiv('img-tip')); // img-tip
-            this.imgInfoCto.imgTipEl.hidden = true; // hide 'img-tip'
-
-            // <div class="img-player"> <img class='img-fullscreen' src=''> </div>
-            this.imgInfoCto.oitContainerViewEl.appendChild(this.imgInfoCto.imgPlayerEl = createDiv('img-player')); // img-player for full screen mode
-            this.imgInfoCto.imgPlayerEl.appendChild(this.imgInfoCto.imgPlayerImgViewEl = createEl('img'));
-            this.imgInfoCto.imgPlayerImgViewEl.addClass('img-fullscreen');
-        }
-        // <div class="img-container"> <img class="img-view" src="" alt=""> </div>
-        this.updateImgViewElAndList(this.pinMaximum);
-        return  this.getMatchedImg();
+    matchedImg.popup = true;
+    if (!this.imgGlobalStatus.popup) {
+      this.imgGlobalStatus.popup = true;
+      this.imgGlobalStatus.activeImgZIndex = 0;
+      this.imgInfoCto.imgList.forEach((image) => { image.zIndex = 0; });
+    } else {
+      matchedImg.zIndex = ++this.imgGlobalStatus.activeImgZIndex;
     }
+    matchedImg.imgViewEl.style.zIndex = String(matchedImg.zIndex);
+    root.style.display = "block";
+  }
 
-    public openOitContainerView = (matchedImg: ImgCto): void => {
-        if (!this.imgInfoCto.oitContainerViewEl) {
-            console.error('obsidian-image-toolkit: oit-*-container-view has not been initialized!');
-            return;
-        }
-        matchedImg.popup = true;
-        if (!this.imgGlobalStatus.popup) {
-            this.imgGlobalStatus.popup = true;
-            this.imgGlobalStatus.activeImgZIndex = 0;
-            this.imgInfoCto.imgList.forEach(value => {
-                value.zIndex = 0;
-            });
-        } else {
-            matchedImg.zIndex = (++this.imgGlobalStatus.activeImgZIndex);
-        }
-        matchedImg.imgViewEl.style.setProperty('z-index', matchedImg.zIndex + '');
-        // display 'oit-pin-container-view'
-        this.imgInfoCto.oitContainerViewEl.style.setProperty('display', 'block');
+  override closeContainerView = (_event: MouseEvent | null = null, activeImg: ImgCto | null = null): void => {
+    if (_event && !activeImg) return;
+    if (!this.imgInfoCto.oitContainerViewEl) return;
+    const active = activeImg ?? this.imgGlobalStatus.activeImg;
+    if (!active) return;
+    this.renderImgView(active.imgViewEl, "", "");
+    active.popup = false;
+    active.mtime = 0;
+    const hasPopup = this.imgInfoCto.imgList.some(({popup}) => popup);
+    if (!hasPopup) {
+      this.imgInfoCto.oitContainerViewEl.style.display = "none";
+      this.imgGlobalStatus.activeImgZIndex = 0;
+      this.imgInfoCto.imgList.forEach((image) => { image.zIndex = 0; });
     }
+    this.imgGlobalStatus.popup = hasPopup;
+    this.addOrRemoveEvents(active, false);
+  };
 
-    /**
-     * hide container view
-     * @param event not null: click event; null: keyboard event (Esc)
-     * @param activeImg
-     */
-    public closeContainerView = (event?: MouseEvent, activeImg?: ImgCto): void => {
-        if (event && !activeImg) {
-            // PinContainerView doesn't need click event to hide container for now
-            return;
-        }
-        if (!this.imgInfoCto.oitContainerViewEl) return;
-        if (!activeImg && !(activeImg = this.imgGlobalStatus.activeImg)) return;
-        // console.log('closeContainerView', event, activeImg)
-        this.renderImgView(activeImg.imgViewEl, '', '');
-        activeImg.popup = false;
-        activeImg.mtime = 0;
-
-        let globalPopupFlag: boolean = false;
-        for (const imgCto of this.imgInfoCto.imgList) {
-            if (imgCto.popup) {
-                globalPopupFlag = true;
-                break;
-            }
-        }
-        if (!globalPopupFlag) {
-            this.imgInfoCto.oitContainerViewEl.style.setProperty('display', 'none'); // hide 'oit-pin-container-view'
-            this.imgGlobalStatus.activeImgZIndex = 0;
-            this.imgInfoCto.imgList.forEach(value => {
-                value.zIndex = 0;
-            });
-        }
-        this.imgGlobalStatus.popup = globalPopupFlag;
-        this.addOrRemoveEvents(activeImg, false);
+  protected override setActiveImgZIndex(activeImg: ImgCto): void {
+    if (this.imgInfoCto.imgList.some((image) =>
+      image.index !== activeImg.index && activeImg.zIndex <= image.zIndex)) {
+      activeImg.zIndex = ++this.imgGlobalStatus.activeImgZIndex;
+      activeImg.imgViewEl.style.zIndex = String(activeImg.zIndex);
     }
-    //endregion
-
-    protected setActiveImgZIndex = (activeImg: ImgCto) => {
-        let isUpdate: boolean = false;
-        for (const imgCto of this.imgInfoCto.imgList) {
-            if (activeImg.index !== imgCto.index && activeImg.zIndex <= imgCto.zIndex) {
-                isUpdate = true;
-                break;
-            }
-        }
-        if (isUpdate) {
-            activeImg.zIndex = (++this.imgGlobalStatus.activeImgZIndex);
-            activeImg.imgViewEl?.style.setProperty("z-index", activeImg.zIndex + '');
-        }
-    }
-
+  }
 }
