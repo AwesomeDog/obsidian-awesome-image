@@ -1,6 +1,7 @@
 import {Md5} from "md5-typescript";
 import {TFile} from "obsidian";
 import type ImageToolkitPlugin from "../main";
+import {IMAGE_EXTS_LOWER} from "../org/constants";
 import {FileCto} from "../to/commonTo";
 import {GalleryImgCacheCto, GalleryImgCto} from "../to/galleryNavbarTo";
 
@@ -9,7 +10,6 @@ const IMAGE_REGEX1 = /!\[(.*?)\]\((.*?)\)/;
 const IMAGE_LINK_REGEX2 = /\[\s*?(!\[\[(.*?[jpe?g|png|gif|svg|bmp].*?)\]\])\s*?\]\(.*?\)/i;
 const IMAGE_REGEX2 = /!\[\[(.*?[jpe?g|png|gif|svg|bmp].*?)\]\]/i;
 const SRC_LINK_REGEX = /[a-z][a-z0-9+\-.]+:\/.*/i;
-const SRC_IMG_REGEX = /.*?\.jpe?g|png|gif|svg|bmp/i;
 const IMG_TAG_LINK_SRC_REGEX = /<a.*?(<img.*?src=['"](.*?)['"].*?\/?>).*?\/a>/i;
 const IMG_TAG_SRC_REGEX = /<img.*?src=['"](.*?)['"].*?\/?>/i;
 const IMG_TAG_ALT_REGEX = /<img.*?alt=['"](.*?)['"].*?\/?>/i;
@@ -140,7 +140,8 @@ function matchImageTag(text: string): GalleryImgCto | null {
 function annotateSource(image: GalleryImgCto): void {
   if (SRC_LINK_REGEX.test(image.src)) {
     if (image.src.startsWith("file://")) image.src = image.src.replace(/^file:\/+/, "app://local/");
-  } else if (SRC_IMG_REGEX.test(image.src)) {
+  } else if (IMAGE_EXTS_LOWER.some((extension) =>
+    image.src.toLowerCase().endsWith("." + extension))) {
     image.name = image.src.split("/").at(-1);
     image.convert = true;
   }
