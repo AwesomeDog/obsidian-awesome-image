@@ -1,4 +1,4 @@
-export type Timer = ReturnType<typeof setTimeout>;
+export type Timer = ReturnType<Window["setTimeout"]>;
 
 export class ImgStatusCto {
   popup = false;

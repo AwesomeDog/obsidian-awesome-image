@@ -22,7 +22,6 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@types/crypto-js": "^4.2.2",
     "@types/node": "^26.3.0",
     "@types/safe-regex": "^1.1.6",
     "del-cli": "^7.0.0",
@@ -36,7 +35,6 @@
   },
   "dependencies": {
     "@simonwep/pickr": "^1.10.1",
-    "crypto-js": "^4.2.0",
     "file-type": "^22.0.2",
     "filenamify": "^7.0.2",
     "is-svg": "^6.1.0",

@@ -3,8 +3,6 @@ import isSvg from "is-svg";
 import {App, requestUrl} from "obsidian";
 import {FORBIDDEN_SYMBOLS_FILENAME_PATTERN, IMAGE_EXTS_LOWER} from "./constants";
 import filenamify from "filenamify";
-import sha256 from "crypto-js/sha256";
-import CryptoJS from "crypto-js/core";
 
 export async function replaceAsync(
   value: string,
@@ -25,7 +23,7 @@ export function isUrl(link: string): boolean {
     try {
         new URL(link);
         return true;
-    } catch (_) {
+    } catch {
         return false;
     }
 }
@@ -80,17 +78,9 @@ export async function ensureFolderExists(app: App, folderPath: string): Promise<
     }
 }
 
-export function genSha256(data: ArrayBuffer): string {
-    return sha256(arrayBufferToWordArray(data)).toString().toLowerCase();
-}
-
-export function arrayBufferToWordArray(ab: ArrayBuffer) {
-    const i8a = new Uint8Array(ab);
-    const words: number[] = [];
-    for (let i = 0; i < i8a.length; i += 4) {
-        words.push((i8a[i] << 24) | (i8a[i + 1] << 16) | (i8a[i + 2] << 8) | i8a[i + 3]);
-    }
-    return CryptoJS.lib.WordArray.create(words, i8a.length);
+export async function genSha256(data: ArrayBuffer): Promise<string> {
+    const digest = await window.crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function getLinkFullPath(app: App, link: string): string | null {

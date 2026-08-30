@@ -17,6 +17,9 @@ export abstract class ContainerView {
   protected imgInfoCto = new ImgInfoCto();
   protected pinMaximum: number;
   protected menuView?: MenuView;
+  private readonly closeContainerViewListener = (event: Event): void => {
+    this.closeContainerView(event as MouseEvent);
+  };
 
   protected constructor(plugin: ImageToolkitPlugin, containerType: ContainerType, pinMaximum: number) {
     this.plugin = plugin;
@@ -152,15 +155,15 @@ export abstract class ContainerView {
     alt ||= image.imgViewEl?.alt;
     this.renderImgTitle(alt, titleIndex);
     if (!src || !image.imgViewEl) return;
-    if (image.refreshImgInterval) clearInterval(image.refreshImgInterval);
+    if (image.refreshImgInterval) window.clearInterval(image.refreshImgInterval);
     const realImage = new Image();
     realImage.src = src;
-    image.refreshImgInterval = setInterval(() => {
+    image.refreshImgInterval = window.setInterval(() => {
       if (realImage.width <= 0 && realImage.height <= 0) return;
-      if (image.refreshImgInterval) clearInterval(image.refreshImgInterval);
+      if (image.refreshImgInterval) window.clearInterval(image.refreshImgInterval);
       image.refreshImgInterval = null;
       this.setImgViewPosition(ImgUtil.calculateImgZoomSize(realImage, image), 0);
-      this.renderImgView(image.imgViewEl, src!, alt ?? "");
+      this.renderImgView(image.imgViewEl, src, alt ?? "");
       this.renderImgTip(image);
       Object.assign(image.imgViewEl.style, {
         transform: image.defaultImgStyle.transform,
@@ -191,7 +194,7 @@ export abstract class ContainerView {
   renderImgTip(activeImg: ImgCto | null = this.imgGlobalStatus.activeImg): void {
     const tip = this.imgInfoCto.imgTipEl;
     if (!activeImg || !tip || activeImg.realWidth <= 0 || activeImg.curWidth <= 0) return;
-    if (this.imgInfoCto.imgTipTimeout) clearTimeout(this.imgInfoCto.imgTipTimeout);
+    if (this.imgInfoCto.imgTipTimeout) window.clearTimeout(this.imgInfoCto.imgTipTimeout);
     if (!this.plugin.settings.imgTipToggle) {
       tip.hidden = true;
       this.imgInfoCto.imgTipTimeout = null;
@@ -209,7 +212,7 @@ export abstract class ContainerView {
       zIndex: String(activeImg.zIndex),
     });
     tip.setText(parseInt(String(ratio)) + "%");
-    this.imgInfoCto.imgTipTimeout = setTimeout(() => { tip.hidden = true; }, 1000);
+    this.imgInfoCto.imgTipTimeout = window.setTimeout(() => { tip.hidden = true; }, 1000);
   }
 
   setImgViewDefaultBackgroundForImgList(): void {
@@ -239,7 +242,7 @@ export abstract class ContainerView {
     activeImg.fullScreen = true;
     const player = this.imgInfoCto.imgPlayerEl;
     const image = this.imgInfoCto.imgPlayerImgViewEl;
-    player.style.display = "block";
+    player.setCssProps({display: "block"});
     player.style.zIndex = String(this.imgGlobalStatus.activeImgZIndex + 10);
     player.addEventListener("click", this.closePlayerImg);
 
@@ -270,7 +273,7 @@ export abstract class ContainerView {
   protected closePlayerImg = (): void => {
     const player = this.imgInfoCto.imgPlayerEl;
     if (player) {
-      player.style.display = "none";
+      player.setCssProps({display: "none"});
       player.removeEventListener("click", this.closePlayerImg);
     }
     if (this.imgInfoCto.imgPlayerImgViewEl) {
@@ -294,14 +297,17 @@ export abstract class ContainerView {
       document.removeEventListener("keyup", this.triggerKeyup);
       this.resetClickTimer();
     }
-    if (!this.isPinMode()) container[method]("click", this.closeContainerView as EventListener);
+    if (!this.isPinMode()) {
+      if (add) container.addEventListener("click", this.closeContainerViewListener);
+      else container.removeEventListener("click", this.closeContainerViewListener);
+    }
     view[method]("mouseenter", this.mouseenterImgView as EventListener);
     view[method]("mouseleave", this.mouseleaveImgView as EventListener);
     view[method]("mousedown", this.mousedownImgView as EventListener);
     view[method]("mouseup", this.mouseupImgView as EventListener);
     view[method]("mousewheel", this.mousewheelViewContainer as EventListener, {passive: true});
     if (!add && image.refreshImgInterval) {
-      clearInterval(image.refreshImgInterval);
+      window.clearInterval(image.refreshImgInterval);
       image.refreshImgInterval = null;
     }
   }
@@ -433,8 +439,8 @@ export abstract class ContainerView {
 
   private setClickTimer(activeImg?: ImgCto): void {
     this.imgGlobalStatus.clickCount++;
-    if (this.imgGlobalStatus.clickTimer) clearTimeout(this.imgGlobalStatus.clickTimer);
-    this.imgGlobalStatus.clickTimer = setTimeout(() => {
+    if (this.imgGlobalStatus.clickTimer) window.clearTimeout(this.imgGlobalStatus.clickTimer);
+    this.imgGlobalStatus.clickTimer = window.setTimeout(() => {
       const count = this.imgGlobalStatus.clickCount;
       this.resetClickTimer();
       if (count === 2) this.clickImgToolbar(null, this.plugin.settings.doubleClickToolbar, activeImg ?? this.imgGlobalStatus.activeImg);
@@ -442,7 +448,7 @@ export abstract class ContainerView {
   }
 
   private resetClickTimer(): void {
-    if (this.imgGlobalStatus.clickTimer) clearTimeout(this.imgGlobalStatus.clickTimer);
+    if (this.imgGlobalStatus.clickTimer) window.clearTimeout(this.imgGlobalStatus.clickTimer);
     this.imgGlobalStatus.clickTimer = null;
     this.imgGlobalStatus.clickCount = 0;
   }

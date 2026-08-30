@@ -38,7 +38,7 @@ export async function getNewFileName(
   app: App, dir: string, contentData: ArrayBuffer,
 ): Promise<{newFileName: string; isDuplicated: boolean}> {
   const extension = await fileExtByContent(contentData);
-  const baseName = cleanFileName(genSha256(contentData));
+  const baseName = cleanFileName(await genSha256(contentData));
   const targetDir = pathJoin(dir, baseName.slice(0, 3).split("").join("/"));
   const newFileName = pathJoin(targetDir, baseName + "." + extension);
   if (!await app.vault.adapter.exists(newFileName, false))

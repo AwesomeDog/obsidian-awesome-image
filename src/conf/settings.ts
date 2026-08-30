@@ -1,4 +1,4 @@
-import {App, normalizePath, Notice, PluginSettingTab, Setting} from "obsidian";
+import {App, normalizePath, Notice, PluginSettingTab, Setting, type SettingDefinitionItem} from "obsidian";
 import Pickr from "@simonwep/pickr";
 import safeRegex from "safe-regex";
 import {t} from "../lang/helpers";
@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: ImgSettingIto = {
   moveTheImageHotkey: MOVE_THE_IMAGE.DEFAULT_HOTKEY, switchTheImageHotkey: SWITCH_THE_IMAGE.DEFAULT_HOTKEY,
   doubleClickToolbar: TOOLBAR_CONF[3].class ?? "toolbar_full_screen",
   viewTriggerHotkey: MODIFIER_HOTKEYS.NONE,
-  realTimeUpdate: false, excludedFolders: [".git/", ".obsidian/", ".trash/"],
+  realTimeUpdate: false, excludedFolders: [".git/", ".trash/"],
   includedFileRegex: ".*\\.md", mediaRootDirectory: "assets/img",
 };
 
@@ -37,12 +37,15 @@ type ColorName =
 export class ImageToolkitSettingTab extends PluginSettingTab {
   constructor(app: App, private readonly plugin: ImageToolkitPlugin) { super(app, plugin); }
 
+  // Keep the imperative renderer for Obsidian versions before 1.13.
+  override getSettingDefinitions(): SettingDefinitionItem[] { return []; }
+
   override display(): void {
     const {containerEl} = this;
     containerEl.empty();
-    containerEl.createEl("h2", {text: "Awesome Image"});
+    new Setting(containerEl).setName(this.plugin.manifest.name).setHeading();
     this.addOrganizationSettings(containerEl);
-    containerEl.createEl("h2", {text: t("IMAGE_TOOLKIT_SETTINGS_TITLE")});
+    new Setting(containerEl).setName(t("IMAGE_TOOLKIT_SETTINGS_TITLE")).setHeading();
     this.addViewSettings(containerEl);
     this.addPinSettings(containerEl);
     this.addDetailSettings(containerEl);
@@ -68,7 +71,7 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
   }
 
   private heading(container: HTMLElement, key: string): void {
-    container.createEl("h3", {text: t(key)});
+    new Setting(container).setName(t(key)).setHeading();
   }
 
   private addOrganizationSettings(container: HTMLElement): void {
@@ -77,7 +80,7 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
         .onChange((value) => this.saveValue("realTimeUpdate", value)));
     new Setting(container).setName("Ignore folders")
       .setDesc("Do not search or rename attachments in these folders. Write each folder on a new line.")
-      .addTextArea((text) => text.setPlaceholder("Example:\n.git/\n.obsidian/")
+      .addTextArea((text) => text.setPlaceholder(`Example:\n.git/\n${this.plugin.app.vault.configDir}/`)
         .setValue(this.plugin.settings.excludedFolders.join("\n"))
         .onChange((value) => this.saveValue(
           "excludedFolders", value.trim().split("\n").map((path) =>
@@ -86,7 +89,7 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
     new Setting(container).setName("Include")
       .setDesc("Include only files matching this regex pattern when running on all notes.")
       .addText((text) => text.setValue(this.plugin.settings.includedFileRegex).onChange(async (value) => {
-        if (!safeRegex(value)) return void new Notice("Unsafe regex! https://www.npmjs.com/package/safe-regex");
+        if (!safeRegex(value)) return void new Notice("Unsafe regular expression. See safe-regex on npm.");
         await this.saveValue("includedFileRegex", value);
       }));
     new Setting(container).setName("Media folder").setDesc("Folder to keep all downloaded media files.")
@@ -101,8 +104,9 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
       ["viewImageInCPB", "VIEW_IMAGE_IN_CPB_NAME", "VIEW_IMAGE_IN_CPB_DESC"],
       ["viewImageWithALink", "VIEW_IMAGE_WITH_A_LINK_NAME", "VIEW_IMAGE_WITH_A_LINK_DESC"],
       ["viewImageOther", "VIEW_IMAGE_OTHER_NAME", "VIEW_IMAGE_OTHER_DESC"],
-    ] as const).forEach(([key, name, desc]) =>
-      this.addToggle(container, key, name, desc, () => this.plugin.toggleViewImage()));
+    ] as const).forEach(([key, name, desc]) => {
+      this.addToggle(container, key, name, desc, () => this.plugin.toggleViewImage());
+    });
   }
 
   private addPinSettings(container: HTMLElement): void {
@@ -201,7 +205,10 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
   ): Setting {
     const setting = this.addOptions(container, name, key, this.getDropdownOptions(), desc, after, false);
     setting.controlEl.append(createDiv("setting-editor-extra-setting-button hotkeys-settings-plus", (el) => el.setText("+")));
-    setting.controlEl.append(createDiv("setting-editor-extra-setting-button", (el) => el.innerHTML = svg));
+    setting.controlEl.append(createDiv("setting-editor-extra-setting-button", (el) => {
+      const parsed = new DOMParser().parseFromString(svg, "image/svg+xml").documentElement;
+      el.append(el.ownerDocument.importNode(parsed, true));
+    }));
     return setting;
   }
 
@@ -226,7 +233,9 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
   }
 
   switchSettingsDisabled(disabled: boolean, ...settings: (Setting | undefined)[]): void {
-    settings.forEach((setting) => setting?.setDisabled(disabled));
+    settings.forEach((setting) => {
+      setting?.setDisabled(disabled);
+    });
   }
 
   createPickrSetting(container: HTMLElement, name: ColorName, defaultColor: string): Setting {
@@ -248,7 +257,7 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
       }).on("show", (_color: Pickr.HSVaColor) => {
         if (!this.plugin.settings.galleryNavbarToggle) pickr.hide();
         const result = (pickr.getRoot() as {interaction?: {result?: HTMLInputElement}}).interaction?.result;
-        requestAnimationFrame(() => requestAnimationFrame(() => result?.select()));
+        window.requestAnimationFrame(() => window.requestAnimationFrame(() => result?.select()));
       }).on("save", (color: Pickr.HSVaColor, instance: Pickr) => {
         if (!color) return;
         instance.hide();
@@ -257,7 +266,7 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
         this.setAndSavePickrSetting(name, saved);
       }).on("cancel", (instance: Pickr) => instance.hide());
     });
-    setting.addExtraButton((button) => button.setIcon("reset").setTooltip("restore default color")
+    setting.addExtraButton((button) => button.setIcon("reset").setTooltip("Restore default color")
       .onClick(() => {
         pickr?.setColor(defaultColor);
         this.setAndSavePickrSetting(name, defaultColor);

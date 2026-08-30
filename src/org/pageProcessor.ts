@@ -39,5 +39,5 @@ export async function processAllPages(plugin: ImageToolkitPlugin): Promise<void>
     await processPage(plugin, file, true);
   }
   notice.setMessage("Awesome Image: " + total + " pages were processed.");
-  setTimeout(() => notice.hide(), NOTICE_TIMEOUT);
+  window.setTimeout(() => notice.hide(), NOTICE_TIMEOUT);
 }

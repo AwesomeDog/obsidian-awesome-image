@@ -51,7 +51,7 @@ export class PinContainerView extends ContainerView {
       matchedImg.zIndex = ++this.imgGlobalStatus.activeImgZIndex;
     }
     matchedImg.imgViewEl.style.zIndex = String(matchedImg.zIndex);
-    root.style.display = "block";
+    root.setCssProps({display: "block"});
   }
 
   override closeContainerView = (_event: MouseEvent | null = null, activeImg: ImgCto | null = null): void => {
@@ -64,7 +64,7 @@ export class PinContainerView extends ContainerView {
     active.mtime = 0;
     const hasPopup = this.imgInfoCto.imgList.some(({popup}) => popup);
     if (!hasPopup) {
-      this.imgInfoCto.oitContainerViewEl.style.display = "none";
+      this.imgInfoCto.oitContainerViewEl.setCssProps({display: "none"});
       this.imgGlobalStatus.activeImgZIndex = 0;
       this.imgInfoCto.imgList.forEach((image) => { image.zIndex = 0; });
     }

@@ -2,7 +2,7 @@
   "id": "awesome-image",
   "name": "Awesome Image",
   "version": "0.1.4",
-  "minAppVersion": "0.16.0",
+  "minAppVersion": "1.4.0",
   "description": "One-stop solution for image management.",
   "author": "AwesomeDog",
   "authorUrl": "https://github.com/AwesomeDog",

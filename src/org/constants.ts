@@ -1,4 +1,4 @@
-export const EXTERNAL_MEDIA_LINK_PATTERN = /\!\[(?<anchor>.*?)\]\((?<link>.+?)\)/g;
+export const EXTERNAL_MEDIA_LINK_PATTERN = /!\[(?<anchor>.*?)\]\((?<link>.+?)\)/g;
 export const NOTICE_TIMEOUT = 10_000;
 export const TIMEOUT_LIKE_INFINITY = 86_400_000;
 export const FORBIDDEN_SYMBOLS_FILENAME_PATTERN = /\s+/g;

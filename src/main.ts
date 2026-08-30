@@ -103,6 +103,8 @@ export default class ImageToolkitPlugin extends Plugin {
 
   async loadSettings(): Promise<void> {
     this.settings = {...DEFAULT_SETTINGS, ...(await this.loadData() ?? {})};
+    const configDir = this.app.vault.configDir.replace(/\/+$/, "") + "/";
+    this.settings.excludedFolders = [...new Set([...this.settings.excludedFolders, configDir])];
     this.addIcons();
   }
 
@@ -151,13 +153,13 @@ export default class ImageToolkitPlugin extends Plugin {
     if (!target || target.tagName !== "IMG") return;
     if (target.getAttribute("data-oit-default-cursor") === null)
       target.setAttribute("data-oit-default-cursor", target.style.cursor);
-    target.style.cursor = "zoom-in";
+    target.setCssProps({cursor: "zoom-in"});
   };
 
   private mouseoutImg = (event: MouseEvent): void => {
     const target = event.target as HTMLImageElement | null;
     if (!target || target.tagName !== "IMG") return;
-    target.style.cursor = target.getAttribute("data-oit-default-cursor") ?? "";
+    target.setCssProps({cursor: target.getAttribute("data-oit-default-cursor") ?? ""});
   };
 
   toggleViewImage(): void {

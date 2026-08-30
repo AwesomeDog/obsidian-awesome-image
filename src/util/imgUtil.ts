@@ -97,7 +97,7 @@ export class ImgUtil {
     source.crossOrigin = "anonymous";
     source.src = image.src;
     source.onload = () => {
-      const canvas = document.createElement("canvas");
+      const canvas = createEl("canvas");
       canvas.width = source.width;
       canvas.height = source.height;
       const context = canvas.getContext("2d");
@@ -109,11 +109,18 @@ export class ImgUtil {
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(source, 0, 0);
       try {
-        canvas.toBlob(async (blob) => {
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            new Notice(t("COPY_IMAGE_ERROR"));
+            return;
+          }
           try {
-            if (!blob) throw new Error("Unable to encode image");
-            await navigator.clipboard.write([new ClipboardItem({"image/png": blob})]);
-            new Notice(t("COPY_IMAGE_SUCCESS"));
+            void navigator.clipboard.write([new ClipboardItem({"image/png": blob})])
+              .then(() => new Notice(t("COPY_IMAGE_SUCCESS")))
+              .catch((error) => {
+                new Notice(t("COPY_IMAGE_ERROR"));
+                console.error(error);
+              });
           } catch (error) {
             new Notice(t("COPY_IMAGE_ERROR"));
             console.error(error);

@@ -13,7 +13,7 @@ const SRC_LINK_REGEX = /[a-z][a-z0-9+\-.]+:\/.*/i;
 const IMG_TAG_LINK_SRC_REGEX = /<a.*?(<img.*?src=['"](.*?)['"].*?\/?>).*?\/a>/i;
 const IMG_TAG_SRC_REGEX = /<img.*?src=['"](.*?)['"].*?\/?>/i;
 const IMG_TAG_ALT_REGEX = /<img.*?alt=['"](.*?)['"].*?\/?>/i;
-const FULL_PATH_REGEX = /^[a-z]\:.*?[jpe?g|png|gif|svg|bmp]/i;
+const FULL_PATH_REGEX = /^[a-z]:.*?[jpe?g|png|gif|svg|bmp]/i;
 const BLOCKQUOTE_PREFIX = "#^";
 const CODE_FENCE = String.fromCharCode(96).repeat(3);
 

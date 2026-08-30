@@ -87,7 +87,7 @@ export class GalleryNavbarView {
     this.galleryMouseDownClientX = 0;
     this.galleryTranslateX = 0;
     if (this.galleryListEl) {
-      this.galleryListEl.style.transform = "translateX(0px)";
+      this.galleryListEl.setCssProps({transform: "translateX(0px)"});
       this.galleryListEl.empty();
     }
   }

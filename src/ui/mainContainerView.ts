@@ -66,17 +66,17 @@ export class MainContainerView extends ContainerView {
     }
     matchedImg.popup = true;
     this.imgGlobalStatus.popup = true;
-    root.style.display = "block";
+    root.setCssProps({display: "block"});
   }
 
   override closeContainerView = (event: MouseEvent | null = null, activeImg: ImgCto | null = null): void => {
     if (event) {
       const target = event.target as HTMLElement;
-      if (!["img-container", "oit-main-container-view"].includes(target.className as string)) return;
+      if (!["img-container", "oit-main-container-view"].includes(target.className)) return;
     }
     const active = activeImg ?? this.imgGlobalStatus.activeImg;
     if (!active) return;
-    if (this.imgInfoCto.oitContainerViewEl) this.imgInfoCto.oitContainerViewEl.style.display = "none";
+    if (this.imgInfoCto.oitContainerViewEl) this.imgInfoCto.oitContainerViewEl.setCssProps({display: "none"});
     this.renderImgTitle("", "");
     this.renderImgView(active.imgViewEl, "", "");
     this.imgGlobalStatus.popup = false;

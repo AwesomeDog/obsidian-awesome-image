@@ -65,8 +65,12 @@ export class OrphanImagesModal extends Modal {
       new Notice(`File no longer exists: ${path}`);
       return;
     }
+    if (!(file instanceof TFile)) {
+      new Notice(`File is not a regular file: ${path}`);
+      return;
+    }
     const leaf = this.app.workspace.getLeaf(false);
-    await leaf.openFile(file as TFile);
+    await leaf.openFile(file);
     this.close();
   }
 
