@@ -18,6 +18,7 @@ export default class ImageToolkitPlugin extends Plugin {
   override async onload(): Promise<void> {
     console.log("loading " + this.manifest.id + " plugin v" + this.manifest.version + " ...");
     await this.loadSettings();
+    this.registerDomEvent(activeDocument, "click", this.nativeClickImage, true);
     this.addCommand({
       id: "process-images-active",
       name: "Process images for active file",
@@ -128,6 +129,20 @@ export default class ImageToolkitPlugin extends Plugin {
     if (!target || target.tagName !== "IMG" || !this.containerView ||
         !this.containerView.checkHotkeySettings(event, this.settings.viewTriggerHotkey)) return;
     this.containerView.renderContainerView(target);
+  };
+
+  private nativeClickImage = (event: MouseEvent): void => {
+    const target = event.target as HTMLImageElement | null;
+    if (!target || target.tagName !== "IMG" || !this.imgSelector ||
+        target.closest?.(".oit-main-container-view, .oit-pin-container-view")) return;
+    try {
+      if (!target.matches?.(this.imgSelector)) return;
+    } catch {
+      return;
+    }
+    event.stopPropagation();
+    event.preventDefault();
+    this.clickImage(event);
   };
 
   private mouseoverImg = (event: MouseEvent): void => {
