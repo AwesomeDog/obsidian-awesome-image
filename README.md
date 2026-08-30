@@ -69,12 +69,10 @@ Use npm's version command to update `package.json`, `package-lock.json`,
 
 ```bash
 npm version patch
-git push origin main --follow-tags
+git push origin master --follow-tags
 ```
 
-These commands assume the release branch is named `main`. This repository
-currently tracks `master`; use `git push origin master --follow-tags` until the
-remote default branch is renamed.
+The release branch for this repository is `master`.
 
 Pushing the tag starts the release workflow. It checks the version, builds the
 plugin, and creates a draft GitHub release containing `main.js`,
