@@ -63,16 +63,22 @@ changes, rebuild and reload the plugin.
 
 ## Release
 
-Keep the version in `manifest.json`, `package.json`, and `versions.json` synchronized, commit the changes, and push an
-annotated tag with the same version. Pushing the tag starts the GitHub Actions release workflow, which builds the
-plugin and creates a draft release with `main.js`, `manifest.json`, and `styles.css` attached.
+Use npm's version command to update `package.json`, `package-lock.json`,
+`manifest.json`, and `versions.json`, then push the generated commit and tag
+(tags intentionally have no `v` prefix):
 
-```shell
-git tag -a 0.1.4 -m "0.1.4"
-git push origin 0.1.4
+```bash
+npm version patch
+git push origin main --follow-tags
 ```
 
-Review the draft release and publish it manually after adding release notes.
+These commands assume the release branch is named `main`. This repository
+currently tracks `master`; use `git push origin master --follow-tags` until the
+remote default branch is renamed.
+
+Pushing the tag starts the release workflow. It checks the version, builds the
+plugin, and creates a draft GitHub release containing `main.js`,
+`manifest.json`, and `styles.css` for review and publication.
 
 ## How it works
 
