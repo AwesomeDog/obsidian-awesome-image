@@ -21,15 +21,10 @@ export async function processPage(
   );
 }
 
-export async function findOrphanImages(plugin: ImageToolkitPlugin): Promise<void> {
-  const orphan = plugin.app.vault.getFiles()
-    .map(({path}) => path)
-    .filter(isLocalImage)
-    .filter((path) => getLinkFullPath(plugin.app, path) === null);
-  const result = "----below are orphaned images----\n" + orphan.join("\n") + "\n----end----";
-  console.log(result);
-  await navigator.clipboard.writeText(result);
-  new Notice("Orphaned images copied to clipboard");
+export function findOrphanImages(plugin: ImageToolkitPlugin): TFile[] {
+  return plugin.app.vault.getFiles()
+    .filter(({path}) => isLocalImage(path))
+    .filter(({path}) => getLinkFullPath(plugin.app, path) === null);
 }
 
 export async function processAllPages(plugin: ImageToolkitPlugin): Promise<void> {

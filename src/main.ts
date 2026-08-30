@@ -9,6 +9,7 @@ import {ContainerView} from "./ui/containerView";
 import {MainContainerView} from "./ui/mainContainerView";
 import {PinContainerView} from "./ui/pinContainerView";
 import {ImgSettingIto} from "./to/imgTo";
+import {OrphanImagesModal} from "./ui/OrphanImagesModal";
 
 export default class ImageToolkitPlugin extends Plugin {
   override settings: ImgSettingIto = {} as ImgSettingIto;
@@ -35,7 +36,7 @@ export default class ImageToolkitPlugin extends Plugin {
     this.addCommand({
       id: "list-orphan-images",
       name: "List images that are not linked by your notes",
-      callback: () => findOrphanImages(this),
+      callback: () => new OrphanImagesModal(this.app, findOrphanImages(this)).open(),
     });
 
     this.app.workspace.onLayoutReady(() => {
