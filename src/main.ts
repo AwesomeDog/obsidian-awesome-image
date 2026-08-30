@@ -11,6 +11,14 @@ import {PinContainerView} from "./ui/pinContainerView";
 import {ImgSettingIto} from "./to/imgTo";
 import {OrphanImagesModal} from "./ui/OrphanImagesModal";
 
+function confirmImageProcessing(scope: string): boolean {
+  return window.confirm(
+    `Warning: Processing images for ${scope} may download external images, ` +
+    "create files in your vault, and rewrite image links in the notes being processed. " +
+    "These changes may be difficult to undo. Continue?",
+  );
+}
+
 export default class ImageToolkitPlugin extends Plugin {
   override settings: ImgSettingIto = {} as ImgSettingIto;
   containerView: ContainerView | null = null;
@@ -25,13 +33,18 @@ export default class ImageToolkitPlugin extends Plugin {
       name: "Process images for active file",
       callback: async () => {
         const file = this.app.workspace.getActiveFile();
-        if (file) await processPage(this, file);
+        if (!file) return;
+        if (!confirmImageProcessing(`the active note ("${file.path}")`)) return;
+        await processPage(this, file);
       },
     });
     this.addCommand({
       id: "process-images-all",
       name: "Process images for all your notes",
-      callback: () => processAllPages(this),
+      callback: () => {
+        if (!confirmImageProcessing("all your notes")) return;
+        return processAllPages(this);
+      },
     });
     this.addCommand({
       id: "list-orphan-images",

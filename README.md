@@ -12,12 +12,39 @@ with [Obsidian Image Toolkit](https://github.com/sissilab/obsidian-image-toolkit
 
 ## Features
 
+- Zoom in or out an image by mouse wheel or clicking toolbar zoom icons
+- Move an image by dragging mouse cursor or pressing keyboard arrow keys
+- Preview an image in full-screen mode
+- Rotate or flip an image by clicking footer toolbar icons
+- Invert the color of an image
+- Copy an image
 - 💾 Command to copy images to a user-defined folder with a uniform name, and update links in your notes.
 - 🔗 Auto download internet images.
 - ⚡ Auto process image the second you paste it, whether it's from internet or is binary format.
 - 🔎 Command to list all images that are not linked by your notes, which can be deleted manually.
 
-## How to use
+## Normal Mode
+
+When you turn off 'Pin an image' on the settings page, it's in **Normal Mode**.
+
+![normal_mode_screenshot](./example/normal_mode_screenshot.png)
+
+**Rule**:
+- After clicking the image, the image will be popped up with transparent mask layer on the background
+- You can only click and preview one image at a time
+- You cannot edit and look through your notes, or other operations except to view and operate the image in the Normal Mode
+
+**Gallery Navbar**:
+- All the images in the current note will be displayed at the bottom, and you can switch these thumbs to view any image
+- To be able to use this functionality, you need to turn on 'display gallery navbar' on the plugin settings page
+- The background color of the gallery navbar and the border color the selected image can be set on the plugin settings page
+
+**Exit**:
+- Click the outside of the image
+- Press Esc
+> If it's in full-screen mode, you need to exit full-screen mode firstly, then exit the image preview page and close popup layer.
+
+## Image processing
 
 **IMPORTANT NOTE** Since the plugin can modify your notes, please back up your vault for the first time, to ensure the
 plugin is acting the way you want.
