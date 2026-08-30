@@ -4,7 +4,15 @@ import {
   genSha256, getLinkFullPath, isLocalImage, isUrl, pathDirname, pathJoin,
 } from "./utils";
 
-export function imageTagProcessor(app: App, mediaDir: string) {
+export interface ImageProcessingFailure {
+  notePath: string;
+  link: string;
+}
+
+export function imageTagProcessor(
+  app: App, mediaDir: string, notePath: string,
+  onFailure?: (failure: ImageProcessingFailure) => void,
+) {
   return async (match: string, anchor: string, link: string): Promise<string> => {
     if (!isUrl(link) && !isLocalImage(link)) return match;
     try {
@@ -28,7 +36,8 @@ export function imageTagProcessor(app: App, mediaDir: string) {
       console.log("Awesome Image changed link: FROM |" + link + "| TO |" + newFileName + "|");
       return newMatch;
     } catch (error) {
-      console.warn("Image processing failed for link: " + link, error);
+      console.warn("Image processing failed for note: " + notePath + ", link: " + link, error);
+      onFailure?.({notePath, link});
       return match;
     }
   };

@@ -355,3 +355,21 @@ body .oit-pin-container-view .img-default-background {
     padding: 4px 8px;
     border-bottom: 1px solid var(--background-modifier-border);
 }
+
+.awesome-image-processing-failures-modal {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.awesome-image-processing-failures-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.awesome-image-processing-failures-table th,
+.awesome-image-processing-failures-table td {
+    text-align: left;
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    word-break: break-word;
+}

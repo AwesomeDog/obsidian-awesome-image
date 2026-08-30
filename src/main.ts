@@ -10,6 +10,7 @@ import {MainContainerView} from "./ui/mainContainerView";
 import {PinContainerView} from "./ui/pinContainerView";
 import {ImgSettingIto} from "./to/imgTo";
 import {OrphanImagesModal} from "./ui/OrphanImagesModal";
+import {ImageProcessingFailuresModal} from "./ui/ImageProcessingFailuresModal";
 
 function confirmImageProcessing(scope: string): boolean {
   return window.confirm(
@@ -35,15 +36,17 @@ export default class ImageToolkitPlugin extends Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file) return;
         if (!confirmImageProcessing(`the active note ("${file.path}")`)) return;
-        await processPage(this, file);
+        const failures = await processPage(this, file);
+        if (failures.length) new ImageProcessingFailuresModal(this.app, failures).open();
       },
     });
     this.addCommand({
       id: "process-images-all",
       name: "Process images for all your notes",
-      callback: () => {
+      callback: async () => {
         if (!confirmImageProcessing("all your notes")) return;
-        return processAllPages(this);
+        const failures = await processAllPages(this);
+        if (failures.length) new ImageProcessingFailuresModal(this.app, failures).open();
       },
     });
     this.addCommand({
