@@ -35,6 +35,12 @@ export default class ImageToolkitPlugin extends Plugin {
       callback: async () => {
         const file = this.app.workspace.getActiveFile();
         if (!file) return;
+        const extension = file.extension.toLowerCase();
+        if (extension === "canvas") {
+          new Notice('Canvas file "' + file.path + '" is not supported for image processing.');
+          return;
+        }
+        if (extension !== "md") return;
         if (!confirmImageProcessing(`the active note ("${file.path}")`)) return;
         const failures = await processPage(this, file);
         if (failures.length) new ImageProcessingFailuresModal(this.app, failures).open();
@@ -52,7 +58,10 @@ export default class ImageToolkitPlugin extends Plugin {
     this.addCommand({
       id: "list-orphan-images",
       name: "List images that are not linked by your notes",
-      callback: () => new OrphanImagesModal(this.app, findOrphanImages(this)).open(),
+      callback: async () => {
+        const orphans = await findOrphanImages(this);
+        new OrphanImagesModal(this.app, orphans).open();
+      },
     });
 
     this.app.workspace.onLayoutReady(() => {
@@ -60,6 +69,9 @@ export default class ImageToolkitPlugin extends Plugin {
         if (!this.settings.realTimeUpdate || !(file instanceof TFile) ||
             Date.now() - file.stat.ctime > 1000 ||
             !isLocalImage(file.name) || !file.name.startsWith(OB_PASTED_IMAGE_PREFIX)) return;
+
+        const activeFile = this.app.workspace.getActiveFile();
+        if (!activeFile || activeFile.extension.toLowerCase() !== "md") return;
 
         const oldFileName = file.path;
         const fileData = await this.app.vault.readBinary(file);
@@ -74,8 +86,6 @@ export default class ImageToolkitPlugin extends Plugin {
           return;
         }
 
-        const activeFile = this.app.workspace.getActiveFile();
-        if (!activeFile) return;
         const linkText = this.app.fileManager.generateMarkdownLink(file, activeFile.path);
         await ensureFolderExists(this.app, pathDirname(newFileName));
         await this.app.fileManager.renameFile(file, newFileName);
