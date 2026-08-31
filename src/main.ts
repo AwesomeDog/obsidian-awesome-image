@@ -13,12 +13,27 @@ import {OrphanImagesModal} from "./ui/OrphanImagesModal";
 import {ImageProcessingFailuresModal} from "./ui/ImageProcessingFailuresModal";
 import {exportSelection} from "./org/exporter";
 
-function confirmImageProcessing(scope: string): boolean {
-  return window.confirm(
-    `Warning: Processing images for ${scope} may download external images, ` +
-    "create files in your vault, and rewrite image links in the notes being processed. " +
-    "These changes may be difficult to undo. Continue?",
-  );
+function confirmImageProcessing(scope: string, mediaRootDirectory: string): boolean {
+  const message = [
+    "Awesome Image is about to process images.",
+    `Scope: ${scope}`,
+    "",
+    "What will happen:",
+    "1. Read Markdown image links in the selected notes.",
+    "2. Download external image URLs when needed.",
+    "3. Create or reuse files below the configured Media folder:",
+    `   ${mediaRootDirectory}`,
+    "   using a SHA-256 filename and three nested hash folders.",
+    "   This nested layout is an intentional storage best practice.",
+    "4. Rewrite the matching image links in those notes.",
+    "",
+    "Existing source images are not deleted.",
+    "There is no plugin-level bulk undo or rollback for changed links.",
+    "If anything is unclear, cancel and back up your vault first.",
+    "",
+    "Continue?",
+  ].join("\n");
+  return window.confirm(message);
 }
 
 export default class ImageToolkitPlugin extends Plugin {
@@ -43,7 +58,9 @@ export default class ImageToolkitPlugin extends Plugin {
           return;
         }
         if (extension !== "md") return;
-        if (!confirmImageProcessing(`the active note ("${file.path}")`)) return;
+        if (!confirmImageProcessing(
+          `the active note ("${file.path}")`, this.settings.mediaRootDirectory,
+        )) return;
         const failures = await processPage(this, file);
         if (failures.length) new ImageProcessingFailuresModal(this.app, failures).open();
       },
@@ -52,7 +69,10 @@ export default class ImageToolkitPlugin extends Plugin {
       id: "process-images-all",
       name: "Process images for all your notes",
       callback: async () => {
-        if (!confirmImageProcessing("all your notes")) return;
+        if (!confirmImageProcessing(
+          "all your notes (subject to Include and Ignore folders settings)",
+          this.settings.mediaRootDirectory,
+        )) return;
         const failures = await processAllPages(this);
         if (failures.length) new ImageProcessingFailuresModal(this.app, failures).open();
       },

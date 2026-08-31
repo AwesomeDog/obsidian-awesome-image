@@ -18,11 +18,11 @@ with [Obsidian Image Toolkit](https://github.com/sissilab/obsidian-image-toolkit
 - Rotate or flip an image by clicking footer toolbar icons
 - Invert the color of an image
 - Copy an image
-- 💾 Command to copy images to a user-defined folder with a uniform name, and update links in your notes.
+- Process local and internet images into a single, content-addressed media folder and update Markdown links.
 - Export a note or folder with its referenced local images while preserving vault-relative paths and leaving originals unchanged.
 - 🔗 Auto download internet images.
 - ⚡ Auto process image the second you paste it, whether it's from internet or is binary format.
-- 🔎 Command to list all images that are not linked by your notes, which can be deleted manually.
+- 🔎 Command to list all images that are not linked by your notes; review the list before deleting anything manually.
 
 ## Normal Mode
 
@@ -47,36 +47,131 @@ When you turn off 'Pin an image' on the settings page, it's in **Normal Mode**.
 
 ## Image processing
 
-**IMPORTANT NOTE** Since the plugin can modify your notes, please back up your vault for the first time, to ensure the
-plugin is acting the way you want.
+Image processing is the part of the plugin that normalizes image links and stores image bytes in the configured
+`Media folder` (the default is `assets/img`). It is separate from the image preview controls described above.
 
-The best way to use this plugin is toggle on `On paste processing` in settings and then
-run `Awesome Image: Process images for all your notes` once.
-After that, all your images will be in good hands.
+> **Back up first.** Processing changes Markdown note text and creates files and folders in the vault. There is no
+> plugin-level undo. If this is your first run, or you are unsure what a setting does, cancel the confirmation and make
+> a copy or snapshot of the entire vault (for example with Git, a filesystem backup, or Obsidian Sync/version history).
 
-You may also want to toggle *OFF* `Use [[Wikilinks]]` under `Files & Links` since only Markdown links is supported now.
+### What processing does
 
-Below are all commands it offers:
+For each supported Markdown image link (`![alt text](image.png)`) in the selected scope, the plugin:
 
-1. Press `Ctrl+P` (or `Cmd+P` on macOS) to open the Command palette.
-2. Type the name (or partial name) of the command you want to run.
-3. Navigate to the command using the arrow keys.
-4. Press Enter.
+1. Reads the local image bytes, or downloads the image when the link is an HTTP(S) URL.
+2. Calculates a SHA-256 hash of those bytes. The hash becomes the stable filename, with an extension detected from the
+   image content.
+3. Creates or reuses the file under the `Media folder`.
+4. Rewrites that image link in the processed note to point to the new file.
 
-The command names are:
+The source file for an existing local image is copied, not deleted. If the same bytes are encountered again, the
+existing hash-named file is reused. Unsupported or unresolved links are left unchanged. Errors encountered while
+reading, downloading, or saving an image are shown in the processing-failures dialog when applicable.
+
+### Storage layout
+
+The output is deliberately sharded by the first three characters of the hash. This nested layout is an intentional
+storage best practice: it keeps a large media collection manageable while giving every image a predictable location.
+The layout is:
+
+```text
+<Media folder>/<first hash character>/<second>/<third>/<full 64-character SHA-256>.<extension>
+```
+
+For example, an image whose hash starts with `74c` may be stored as:
+
+```text
+assets/img/7/4/c/74c2e1...9ab3.png
+```
+
+Here `...` only abbreviates the middle of the complete 64-character hash.
+
+### Before and after
+
+The following text example is illustrative. The exact hash and extension depend on the image bytes and your `Media
+folder`.
+
+**Before processing**
+
+```text
+My vault/
+|-- Notes/
+|   `-- Travel.md
+`-- Photos/
+    |-- sunset.jpg
+    `-- map.png
+
+Notes/Travel.md
+----------------
+![](../Photos/sunset.jpg)
+![](https://example.com/map.png)
+```
+
+The note points at an image in its original folder and at an external URL.
+
+**After processing**
+
+```text
+My vault/
+|-- Notes/
+|   `-- Travel.md
+|-- Photos/
+|   `-- sunset.jpg                 (original is kept)
+`-- assets/img/
+    |-- 7/4/c/74c2e1...png         (local image copy)
+    `-- d/2/a/d2a91f...png         (downloaded URL)
+
+Notes/Travel.md
+----------------
+![](assets/img/7/4/c/74c2e1...png)
+![](assets/img/d/2/a/d2a91f...png)
+```
+
+The local image is copied into the hash layout, the external image is downloaded there, and the note links are updated.
+The original local image remains in its original folder.
+
+### Scope and settings
+
+- `Process images for active file` processes the active Markdown note only. Canvas and other file types are skipped.
+- `Process images for all your notes` processes Markdown files matching `Include` and skips notes below `Ignore folders`.
+- `Media folder` is the root of the generated hash layout. Changing it affects future processing; it does not move old
+  files automatically.
+- `On paste processing` automatically moves and renames newly pasted `Pasted image ...` files in the active Markdown
+  note. This automatic path does not show the batch confirmation, so make the backup before enabling it.
+- The processing commands currently recognize Markdown image links. Wikilinks such as `![[image.png]]` are not
+  rewritten by these commands.
+
+To run a command, open the Command palette with `Ctrl+P` (or `Cmd+P` on macOS), search for `Awesome Image`, and press
+Enter. The available commands are:
 
 1. `Awesome Image: Process images for active file`
 2. `Awesome Image: Process images for all your notes`
 3. `Awesome Image: List images that are not linked by your notes`
 
-Enable `Show export menu` in the plugin settings to right-click a Markdown file or folder in the File Explorer and
-choose `Export notes with referenced images`. The option is hidden by default. Enter a vault-relative destination
-folder when prompted. The plugin recursively copies the selected notes and their referenced local images while
-preserving each file's original vault path, so the links in the copied notes continue to work without any rewriting.
-Existing destination files are not overwritten.
+`List images that are not linked by your notes` only reports candidates. It opens a dialog with paths and sizes, lets
+you open an item or copy all paths, and does not delete anything.
 
-To see results of `List images that are not linked by your notes`, you may want to open Developer Tools by pressing
-Ctrl+Shift+I in Windows and Linux, or Cmd-Option-I on macOS.
+### Export without rewriting
+
+Enable `Show export menu` in the plugin settings to right-click a Markdown file or folder in the File Explorer and
+choose `Export notes with referenced images`. Enter a vault-relative destination folder when prompted. This separate
+export action recursively copies the selected notes and their referenced local images while preserving each file's
+original vault path. It leaves the source notes, links, and images unchanged, and never overwrites an existing
+destination file.
+
+### Reverting a run
+
+There is no automatic reverse operation. The safest way to revert is to restore the affected notes from the vault copy,
+Git history, or another version-history system. Because original local images are retained, do not delete the generated
+media folder until you have restored links and confirmed that no notes still reference those files. The orphan-image
+command is a report, not a cleanup or rollback command.
+
+For a cautious first run:
+
+1. Back up or snapshot the vault.
+2. Set and note the desired `Media folder`.
+3. Process one small test note and inspect both the note link and the created folders.
+4. Run the all-notes command only after the result is what you expect.
 
 ## Development
 
@@ -111,23 +206,6 @@ The release branch for this repository is `master`.
 Pushing the tag starts the release workflow. It checks the version, builds the
 plugin, and creates a draft GitHub release containing `main.js`,
 `manifest.json`, and `styles.css` for review and publication.
-
-## How it works
-
-When Process images:
-
-1. Locate the image using regex in notes.
-2. Get image from binary data or from internet(if it is an url), calc the SHA256 hash of the image.
-3. Copy image file to user-defined folder, image file name is derived from SHA256 to avoid conflict.
-4. Change the image path in note to direct to the new image file.
-5. The old image will NOT be deleted for data security reasons, you can find them using the command below.
-
-When List images:
-Compare image files and links in your notes, and display images that are not linked by your notes in Developer Tools
-console.
-
-When Paste image:
-Acts just like Process images for pasted content but automated (ensure `On paste processing` is toggled on in settings).
 
 ## Attribution
 

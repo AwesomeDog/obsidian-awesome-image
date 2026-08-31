@@ -80,7 +80,8 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
       .setDesc("Show 'Export notes with referenced images' in File Explorer context menus.")
       .addToggle((toggle) => toggle.setValue(this.plugin.settings.showExportMenu)
         .onChange((value) => this.saveValue("showExportMenu", value)));
-    new Setting(container).setName("On paste processing").setDesc("Process active page if image was pasted.")
+    new Setting(container).setName("On paste processing")
+      .setDesc("Automatically move and rename newly pasted images in the active Markdown note; back up first.")
       .addToggle((toggle) => toggle.setValue(this.plugin.settings.realTimeUpdate)
         .onChange((value) => this.saveValue("realTimeUpdate", value)));
     new Setting(container).setName("Ignore folders")
@@ -97,7 +98,8 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
         if (!safeRegex(value)) return void new Notice("Unsafe regular expression. See safe-regex on npm.");
         await this.saveValue("includedFileRegex", value);
       }));
-    new Setting(container).setName("Media folder").setDesc("Folder to keep all downloaded media files.")
+    new Setting(container).setName("Media folder")
+      .setDesc("Root folder for copied and downloaded images; each image uses three hash-character subfolders.")
       .addText((text) => text.setValue(this.plugin.settings.mediaRootDirectory)
         .onChange((value) => this.saveValue("mediaRootDirectory", value)));
   }
