@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: ImgSettingIto = {
   moveTheImageHotkey: MOVE_THE_IMAGE.DEFAULT_HOTKEY, switchTheImageHotkey: SWITCH_THE_IMAGE.DEFAULT_HOTKEY,
   doubleClickToolbar: TOOLBAR_CONF[3].class ?? "toolbar_full_screen",
   viewTriggerHotkey: MODIFIER_HOTKEYS.NONE,
+  showExportMenu: false,
   realTimeUpdate: false, excludedFolders: [".git/", ".trash/"],
   includedFileRegex: ".*\\.md", mediaRootDirectory: "assets/img",
 };
@@ -75,6 +76,10 @@ export class ImageToolkitSettingTab extends PluginSettingTab {
   }
 
   private addOrganizationSettings(container: HTMLElement): void {
+    new Setting(container).setName("Show export menu")
+      .setDesc("Show 'Export notes with referenced images' in File Explorer context menus.")
+      .addToggle((toggle) => toggle.setValue(this.plugin.settings.showExportMenu)
+        .onChange((value) => this.saveValue("showExportMenu", value)));
     new Setting(container).setName("On paste processing").setDesc("Process active page if image was pasted.")
       .addToggle((toggle) => toggle.setValue(this.plugin.settings.realTimeUpdate)
         .onChange((value) => this.saveValue("realTimeUpdate", value)));

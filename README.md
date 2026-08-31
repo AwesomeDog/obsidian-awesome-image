@@ -19,6 +19,7 @@ with [Obsidian Image Toolkit](https://github.com/sissilab/obsidian-image-toolkit
 - Invert the color of an image
 - Copy an image
 - 💾 Command to copy images to a user-defined folder with a uniform name, and update links in your notes.
+- Export a note or folder with its referenced local images while preserving vault-relative paths and leaving originals unchanged.
 - 🔗 Auto download internet images.
 - ⚡ Auto process image the second you paste it, whether it's from internet or is binary format.
 - 🔎 Command to list all images that are not linked by your notes, which can be deleted manually.
@@ -67,6 +68,12 @@ The command names are:
 1. `Awesome Image: Process images for active file`
 2. `Awesome Image: Process images for all your notes`
 3. `Awesome Image: List images that are not linked by your notes`
+
+Enable `Show export menu` in the plugin settings to right-click a Markdown file or folder in the File Explorer and
+choose `Export notes with referenced images`. The option is hidden by default. Enter a vault-relative destination
+folder when prompted. The plugin recursively copies the selected notes and their referenced local images while
+preserving each file's original vault path, so the links in the copied notes continue to work without any rewriting.
+Existing destination files are not overwritten.
 
 To see results of `List images that are not linked by your notes`, you may want to open Developer Tools by pressing
 Ctrl+Shift+I in Windows and Linux, or Cmd-Option-I on macOS.

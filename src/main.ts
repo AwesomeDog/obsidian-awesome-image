@@ -1,4 +1,4 @@
-import {addIcon, MarkdownView, Notice, Plugin, TFile} from "obsidian";
+import {addIcon, MarkdownView, Notice, Plugin, TFile, TFolder} from "obsidian";
 import {DEFAULT_SETTINGS, ImageToolkitSettingTab} from "./conf/settings";
 import {ICONS, VIEW_IMG_SELECTOR} from "./conf/constants";
 import {findOrphanImages, processAllPages, processPage} from "./org/pageProcessor";
@@ -11,6 +11,7 @@ import {PinContainerView} from "./ui/pinContainerView";
 import {ImgSettingIto} from "./to/imgTo";
 import {OrphanImagesModal} from "./ui/OrphanImagesModal";
 import {ImageProcessingFailuresModal} from "./ui/ImageProcessingFailuresModal";
+import {exportSelection} from "./org/exporter";
 
 function confirmImageProcessing(scope: string): boolean {
   return window.confirm(
@@ -24,6 +25,7 @@ export default class ImageToolkitPlugin extends Plugin {
   override settings: ImgSettingIto = {} as ImgSettingIto;
   containerView: ContainerView | null = null;
   imgSelector = "";
+  exportRootInProgress: string | null = null;
 
   override async onload(): Promise<void> {
     console.log("loading " + this.manifest.id + " plugin v" + this.manifest.version + " ...");
@@ -63,10 +65,23 @@ export default class ImageToolkitPlugin extends Plugin {
         new OrphanImagesModal(this.app, orphans).open();
       },
     });
+    this.registerEvent(this.app.workspace.on("file-menu", (menu, file, source) => {
+      if (!this.settings.showExportMenu ||
+          (source !== "file-explorer-context-menu" && source !== "file-explorer") ||
+          (!(file instanceof TFolder) && !(file instanceof TFile))) return;
+      if (file instanceof TFile && file.extension.toLowerCase() !== "md") return;
+      menu.addSeparator();
+      menu.addItem((item) => item
+        .setTitle("Export notes with referenced images")
+        .setIcon("images")
+        .onClick(() => void exportSelection(this, file)));
+    }));
 
     this.app.workspace.onLayoutReady(() => {
       this.registerEvent(this.app.vault.on("create", async (file) => {
-        if (!this.settings.realTimeUpdate || !(file instanceof TFile) ||
+        const exportRoot = this.exportRootInProgress;
+        if ((exportRoot && (file.path === exportRoot || file.path.startsWith(exportRoot + "/"))) ||
+            !this.settings.realTimeUpdate || !(file instanceof TFile) ||
             Date.now() - file.stat.ctime > 1000 ||
             !isLocalImage(file.name) || !file.name.startsWith(OB_PASTED_IMAGE_PREFIX)) return;
 
