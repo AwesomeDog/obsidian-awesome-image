@@ -2,6 +2,7 @@ import {App} from "obsidian";
 import {
   arraybufferEqual, cleanFileName, downloadImage, ensureFolderExists, fileExtByContent,
   genSha256, getLinkFullPath, isLocalImage, isUrl, pathDirname, pathJoin,
+  resolveMediaRootDirectory,
 } from "./utils";
 
 export interface ImageProcessingFailure {
@@ -13,6 +14,7 @@ export function imageTagProcessor(
   app: App, mediaDir: string, notePath: string,
   onFailure?: (failure: ImageProcessingFailure) => void,
 ) {
+  const resolvedMediaDir = resolveMediaRootDirectory(mediaDir, notePath);
   return async (match: string, anchor: string, link: string): Promise<string> => {
     if (!isUrl(link) && !isLocalImage(link)) return match;
     try {
@@ -25,7 +27,7 @@ export function imageTagProcessor(
         fileData = await downloadImage(link);
       }
 
-      const {newFileName, isDuplicated} = await getNewFileName(app, mediaDir, fileData);
+      const {newFileName, isDuplicated} = await getNewFileName(app, resolvedMediaDir, fileData);
       if (!isDuplicated) {
         await ensureFolderExists(app, pathDirname(newFileName));
         await app.vault.createBinary(newFileName, fileData);

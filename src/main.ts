@@ -2,7 +2,7 @@ import {addIcon, MarkdownView, Notice, Plugin, TFile, TFolder} from "obsidian";
 import {DEFAULT_SETTINGS, ImageToolkitSettingTab} from "./conf/settings";
 import {ICONS, VIEW_IMG_SELECTOR} from "./conf/constants";
 import {findOrphanImages, processAllPages, processPage} from "./org/pageProcessor";
-import {ensureFolderExists, isLocalImage, pathDirname} from "./org/utils";
+import {ensureFolderExists, isLocalImage, pathDirname, resolveMediaRootDirectory} from "./org/utils";
 import {OB_PASTED_IMAGE_PREFIX} from "./org/constants";
 import {getNewFileName} from "./org/contentProcessor";
 import {ContainerView} from "./ui/containerView";
@@ -111,7 +111,7 @@ export default class ImageToolkitPlugin extends Plugin {
         const oldFileName = file.path;
         const fileData = await this.app.vault.readBinary(file);
         const {newFileName, isDuplicated} = await getNewFileName(
-          this.app, this.settings.mediaRootDirectory, fileData,
+          this.app, resolveMediaRootDirectory(this.settings.mediaRootDirectory, activeFile.path), fileData,
         );
         if (isDuplicated) {
           const message = "IMAGE Duplicated! OPEN CONSOLE! FROM |" + file.path +

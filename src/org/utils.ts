@@ -65,6 +65,10 @@ export function pathDirname(filePath: string): string {
   return separator < 0 ? "." : normalized.slice(0, separator) || "/";
 }
 
+export function resolveMediaRootDirectory(mediaRootDirectory: string, notePath: string): string {
+  return mediaRootDirectory.replaceAll("{{NOTE_FOLDER}}", () => pathDirname(notePath));
+}
+
 export function pathBasename(filePath: string): string {
   const normalized = filePath.replace(/\\/g, "/").replace(/\/+$/, "");
   return normalized.slice(normalized.lastIndexOf("/") + 1);
