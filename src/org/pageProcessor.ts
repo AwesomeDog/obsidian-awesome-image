@@ -3,7 +3,7 @@ import type ImageToolkitPlugin from "../main";
 import {ImgSettingIto} from "../to/imgTo";
 import {EXTERNAL_MEDIA_LINK_PATTERN, NOTICE_TIMEOUT, TIMEOUT_LIKE_INFINITY} from "./constants";
 import {extractCanvasReferences, resolveCanvasImagePaths} from "./canvas";
-import {getLinkFullPath, isLocalImage, replaceAsync} from "./utils";
+import {collectMarkdownNotes, getLinkFullPath, isLocalImage, replaceAsync} from "./utils";
 import {imageTagProcessor, type ImageProcessingFailure} from "./contentProcessor";
 
 export async function processPage(
@@ -64,9 +64,7 @@ async function addCanvasReferences(
 
 export async function processAllPages(plugin: ImageToolkitPlugin): Promise<ImageProcessingFailure[]> {
   const failures: ImageProcessingFailure[] = [];
-  const regex = new RegExp(plugin.settings.includedFileRegex, "i");
-  const files = plugin.app.vault.getMarkdownFiles().filter((file) =>
-    regex.test(file.path) && !plugin.settings.excludedFolders.some((folder) => file.path.startsWith(folder)));
+  const files = collectMarkdownNotes(plugin);
   const total = files.length;
   const notice = new Notice("Awesome Image \nStart processing. Total " + total + " pages. ", TIMEOUT_LIKE_INFINITY);
 

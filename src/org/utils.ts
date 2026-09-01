@@ -1,8 +1,17 @@
 import {fileTypeFromBuffer} from "file-type";
 import isSvg from "is-svg";
-import {App, requestUrl} from "obsidian";
+import {App, requestUrl, TFile} from "obsidian";
 import {FORBIDDEN_SYMBOLS_FILENAME_PATTERN, IMAGE_EXTS_LOWER} from "./constants";
 import filenamify from "filenamify";
+import type ImageToolkitPlugin from "../main";
+
+/** Markdown notes matching the `Include` regex and outside `Ignore folders`. */
+export function collectMarkdownNotes(plugin: ImageToolkitPlugin): TFile[] {
+  const regex = new RegExp(plugin.settings.includedFileRegex, "i");
+  return plugin.app.vault.getMarkdownFiles().filter((file) =>
+    regex.test(file.path) &&
+    !plugin.settings.excludedFolders.some((folder) => file.path.startsWith(folder)));
+}
 
 export async function replaceAsync(
   value: string,

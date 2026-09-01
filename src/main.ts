@@ -3,7 +3,7 @@ import {DEFAULT_SETTINGS, ImageToolkitSettingTab} from "./conf/settings";
 import {ICONS, VIEW_IMG_SELECTOR} from "./conf/constants";
 import {findOrphanImages, processAllPages, processPage} from "./org/pageProcessor";
 import {ensureFolderExists, isLocalImage, pathDirname, resolveMediaRootDirectory} from "./org/utils";
-import {OB_PASTED_IMAGE_PREFIX} from "./org/constants";
+import {NOTICE_TIMEOUT, OB_PASTED_IMAGE_PREFIX} from "./org/constants";
 import {getNewFileName} from "./org/contentProcessor";
 import {ContainerView} from "./ui/containerView";
 import {MainContainerView} from "./ui/mainContainerView";
@@ -12,6 +12,29 @@ import {ImgSettingIto} from "./to/imgTo";
 import {OrphanImagesModal} from "./ui/OrphanImagesModal";
 import {ImageProcessingFailuresModal} from "./ui/ImageProcessingFailuresModal";
 import {exportSelection} from "./org/exporter";
+import {convertWikiImageLinksInVault} from "./org/imageLinkConverter";
+
+function confirmLinkConversion(): boolean {
+  const message = [
+    "Awesome Image is about to rewrite wiki image links as Markdown links.",
+    "",
+    "What will happen:",
+    "1. Scan every note in the vault (subject to Include and Ignore folders settings).",
+    "2. Replace [[image.png]] and ![[image.png]] with [Markdown](links).",
+    "3. Leave links to notes, PDFs and other non-image files exactly as they are.",
+    "4. Leave links that do not resolve to an existing image, and links inside code blocks,",
+    "   exactly as they are.",
+    "",
+    "The result is always a Markdown link, whatever 'Use [[Wikilinks]]' is set to.",
+    "The path itself follows your 'New link format' setting (shortest, relative, absolute).",
+    "",
+    "Note text is rewritten in place. There is no plugin-level bulk undo or rollback.",
+    "If anything is unclear, cancel and back up your vault first.",
+    "",
+    "Continue?",
+  ].join("\n");
+  return window.confirm(message);
+}
 
 function confirmImageProcessing(scope: string, mediaRootDirectory: string): boolean {
   const message = [
@@ -75,6 +98,18 @@ export default class ImageToolkitPlugin extends Plugin {
         )) return;
         const failures = await processAllPages(this);
         if (failures.length) new ImageProcessingFailuresModal(this.app, failures).open();
+      },
+    });
+    this.addCommand({
+      id: "convert-wiki-image-links-to-markdown",
+      name: "Convert wiki image links to Markdown links in the whole vault",
+      callback: async () => {
+        if (!confirmLinkConversion()) return;
+        const {notes, converted, skipped} = await convertWikiImageLinksInVault(this);
+        new Notice([
+          "Converted " + converted + " wiki image link(s) in " + notes + " note(s).",
+          skipped ? skipped + " image link(s) were left unchanged." : "",
+        ].filter(Boolean).join(" "), NOTICE_TIMEOUT);
       },
     });
     this.addCommand({

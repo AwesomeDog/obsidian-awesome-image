@@ -23,6 +23,8 @@ with [Obsidian Image Toolkit](https://github.com/sissilab/obsidian-image-toolkit
 - 🔗 Auto download internet images.
 - ⚡ Auto process image the second you paste it, whether it's from internet or is binary format.
 - 🔎 Command to list all images that are not linked by your notes; review the list before deleting anything manually.
+- 🔗 Command to convert wiki **image** links (`[[image.png]]`, `![[image.png]]`) to Markdown links across the whole
+  vault.
 
 ## Normal Mode
 
@@ -139,14 +141,15 @@ The original local image remains in its original folder.
 - `On paste processing` automatically moves and renames newly pasted `Pasted image ...` files in the active Markdown
   note. This automatic path does not show the batch confirmation, so make the backup before enabling it.
 - The processing commands currently recognize Markdown image links. Wikilinks such as `![[image.png]]` are not
-  rewritten by these commands.
+  rewritten by these commands; convert them first with the image link conversion command below.
 
 To run a command, open the Command palette with `Ctrl+P` (or `Cmd+P` on macOS), search for `Awesome Image`, and press
 Enter. The available commands are:
 
 1. `Awesome Image: Process images for active file`
 2. `Awesome Image: Process images for all your notes`
-3. `Awesome Image: List images that are not linked by your notes`
+3. `Awesome Image: Convert wiki image links to Markdown links in the whole vault`
+4. `Awesome Image: List images that are not linked by your notes`
 
 `List images that are not linked by your notes` only reports candidates. It opens a dialog with paths and sizes, lets
 you open an item or copy all paths, and does not delete anything.
@@ -158,6 +161,46 @@ choose `Export notes with referenced images`. Enter a vault-relative destination
 export action recursively copies the selected notes and their referenced local images while preserving each file's
 original vault path. It leaves the source notes, links, and images unchanged, and never overwrites an existing
 destination file.
+
+### Convert wiki image links to Markdown links
+
+`Convert wiki image links to Markdown links in the whole vault` rewrites wiki links that point at an **image** as
+`[Markdown](links)` in every note covered by `Include` and `Ignore folders`. It asks for confirmation first, because it
+edits note text in place and there is no bulk undo.
+
+Images are files with one of these extensions: `jpg`, `jpeg`, `png`, `gif`, `svg`, `bmp`, `tiff`, `webp`.
+
+| Before | After |
+| --- | --- |
+| `![[sunset.jpg]]` | `![](sunset.jpg)` |
+| `![[sunset.jpg\|300]]` | `![300](sunset.jpg)` |
+| `![[sunset.jpg\|300x200]]` | `![300x200](sunset.jpg)` |
+| `![[sunset.jpg\|A caption]]` | `![A caption](sunset.jpg)` |
+| `[[sunset.jpg]]` | `[sunset.jpg](sunset.jpg)` |
+| `[[sunset.jpg\|A caption]]` | `[A caption](sunset.jpg)` |
+| `[[img/sunset.jpg]]` | `[sunset.jpg](img/sunset.jpg)` |
+
+Notes:
+
+- The result is always a Markdown link, whatever `Files & Links → Use [[Wikilinks]]` is set to. The path itself still
+  follows your `New link format` setting (shortest, relative, absolute).
+- In a Markdown embed the size lives in the alt text, so `![[image.png|300]]` becomes `![300](image.png)` and Obsidian
+  still renders it 300 px wide. A caption such as `![[image.png|A caption]]` is kept as the alt text.
+- A wiki link without `!` is a link, not an embed, so it needs visible text: the file name is used when there is no
+  caption. Otherwise `[](sunset.jpg)` would render as nothing.
+- This command is deliberately images-only. Links to notes, PDFs and other attachments are left as they are, so your
+  wiki note links are not rewritten behind your back.
+
+The following are deliberately left unchanged:
+
+- Links that do not resolve to an existing image file, including `[[#Heading in this note]]`.
+- Links inside fenced code blocks and inside inline code.
+- Excalidraw and Kanban notes, which store structured data inside Markdown files.
+
+The closing notice reports how many image links were converted and how many were left unchanged.
+
+This is also the way to make image processing work in a vault that uses wiki image embeds: run the conversion first,
+then `Process images for all your notes`.
 
 ### Reverting a run
 
