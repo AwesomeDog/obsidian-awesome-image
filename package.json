@@ -1,6 +1,6 @@
 {
   "name": "obsidian-awesome-image",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "One-stop solution for image management.",
   "main": "build/main.js",
   "engines": {
