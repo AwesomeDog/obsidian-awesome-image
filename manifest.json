@@ -3,7 +3,7 @@
   "name": "Awesome Image",
   "version": "0.1.7",
   "minAppVersion": "1.4.0",
-  "description": "One-stop solution for image management.",
+  "description": "Offline-first image manager and viewer. Zoom, pan, rotate and gallery-preview images, then organize them: download remote images, deduplicate by SHA-256 into one media folder, fix Markdown links, convert wiki image embeds and find unused images.",
   "author": "AwesomeDog",
   "authorUrl": "https://github.com/AwesomeDog",
   "isDesktopOnly": true
