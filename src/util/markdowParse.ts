@@ -28,7 +28,7 @@ export function parseActiveViewData(
 
   for (const line of lines) {
     if (!line) continue;
-    if (line.startsWith(CODE_FENCE)) {
+    if (line.trimStart().startsWith(CODE_FENCE)) {
       inCode = !inCode;
       continue;
     }
