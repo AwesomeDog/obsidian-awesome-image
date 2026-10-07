@@ -415,7 +415,8 @@ generated files directly into a local vault:
 npm install
 npm test
 npm run build
-npm run deploy -- "C:/path/to/your/vault"
+npm run deploy -- "C:/path/to/your/vault"   # install the plugin into a vault
+npm run seed -- "C:/path/to/your/vault"     # fill <vault>/Awesome Image Dev with test notes
 ```
 
 The vault path can also be provided through the `OBSIDIAN_VAULT` environment variable. The deploy command installs
