@@ -1,9 +1,9 @@
-import {Notice, TFile} from "obsidian";
+import {App, Notice, TFile} from "obsidian";
 import type ImageToolkitPlugin from "../main";
 import {ImgSettingIto} from "../to/imgTo";
 import {EXTERNAL_MEDIA_LINK_PATTERN, NOTICE_TIMEOUT, TIMEOUT_LIKE_INFINITY} from "./constants";
-import {extractCanvasReferences, resolveCanvasImagePaths} from "./canvas";
-import {collectMarkdownNotes, getLinkFullPath, isLocalImage, replaceAsync} from "./utils";
+import {buildImageReferenceIndex, collectResolvedBasenames, type ImageReferenceIndex} from "./referenceIndex";
+import {collectMarkdownNotes, isLocalImage, pathBasename, replaceAsync} from "./utils";
 import {imageTagProcessor, type ImageProcessingFailure} from "./contentProcessor";
 
 export async function processPage(
@@ -30,36 +30,38 @@ export async function processPage(
   return failures;
 }
 
-export async function findOrphanImages(plugin: ImageToolkitPlugin): Promise<TFile[]> {
-  const files = plugin.app.vault.getFiles();
-  const referencedPaths = new Set<string>();
-  for (const noteLinks of Object.values(plugin.app.metadataCache.resolvedLinks)) {
-    for (const path of Object.keys(noteLinks)) referencedPaths.add(path);
-  }
-
-  for (const canvas of files.filter(({extension}) => extension.toLowerCase() === "canvas")) {
-    await addCanvasReferences(plugin, canvas, referencedPaths);
-  }
-
-  return files
-    .filter(({path}) => isLocalImage(path))
-    .filter(({path}) => !referencedPaths.has(path) && getLinkFullPath(plugin.app, path) === null);
+export interface OrphanImagesResult {
+  orphans: TFile[];
+  /** Snapshot used for this run only; discarded when the command returns. */
+  index: ImageReferenceIndex;
 }
 
-async function addCanvasReferences(
-  plugin: ImageToolkitPlugin, canvas: TFile, referencedPaths: Set<string>,
-): Promise<void> {
-  let data: unknown;
-  try {
-    data = JSON.parse(await plugin.app.vault.cachedRead(canvas)) as unknown;
-  } catch (error) {
-    console.warn("Awesome Image: Failed to read canvas " + canvas.path, error);
-    return;
-  }
+/**
+ * Lists images that nothing links to. The reference index is built here and
+ * dropped afterwards — it is never cached and registers no listeners. It covers
+ * Markdown embeds, links, reference links, frontmatter links and Canvas files,
+ * and a basename pass over `resolvedLinks` is kept as a conservative fallback.
+ */
+export async function findOrphanImages(plugin: ImageToolkitPlugin): Promise<OrphanImagesResult> {
+  const app = plugin.app;
+  const index = await buildImageReferenceIndex(app);
+  const linkedBasenames = collectResolvedBasenames(app);
+  const orphans = app.vault.getFiles()
+    .filter(({path}) => isLocalImage(path))
+    .filter(({path}) => !index.isReferenced(path) && !linkedBasenames.has(pathBasename(path)));
+  return {orphans, index};
+}
 
-  for (const reference of extractCanvasReferences(data)) {
-    for (const path of resolveCanvasImagePaths(plugin.app, reference)) referencedPaths.add(path);
-  }
+/**
+ * Re-checks references right before a destructive action and returns only the
+ * files that are still unreferenced. A note can start referencing an image at
+ * any moment, so this runs again instead of trusting an earlier scan.
+ */
+export async function filterStillUnreferenced(app: App, files: TFile[]): Promise<TFile[]> {
+  const index = await buildImageReferenceIndex(app);
+  const linkedBasenames = collectResolvedBasenames(app);
+  return files.filter(({path}) =>
+    !index.isReferenced(path) && !linkedBasenames.has(pathBasename(path)));
 }
 
 export async function processAllPages(plugin: ImageToolkitPlugin): Promise<ImageProcessingFailure[]> {

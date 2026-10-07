@@ -70,7 +70,8 @@ for image management in your Obsidian vault, combined with the excellent viewing
 - **🔗 Auto-download internet images** into your vault so notes keep working offline
 - **⚡ Process on paste** — pasted screenshots and binary images are moved and renamed the second you paste them
 - **♻️ Automatic deduplication** — identical image bytes always resolve to the same file, so duplicates stop multiplying
-- **🔎 Find unused images** — list every image in the vault that no note links to, review it, then delete manually
+- **🔎 Find unused images** — list every image that no note, frontmatter or Canvas board links to, then delete the ones
+  you pick; references are re-checked first and files go to the trash
 - **🔁 Convert wiki image links to Markdown links** (`![[image.png]]` → `![](image.png)`) across the whole vault
 - **📦 Export notes with their images** — copy a note or folder together with the local images it references, preserving
   vault-relative paths and leaving the originals untouched
@@ -125,7 +126,7 @@ Open the Command palette with `Ctrl+P` (`Cmd+P` on macOS) and search for **Aweso
 | `Awesome Image: Process images for active file` | Processes the active Markdown note only. Canvas and other file types are skipped. |
 | `Awesome Image: Process images for all your notes` | Processes every Markdown file matching **Include**, skipping notes under **Ignore folders**. |
 | `Awesome Image: Convert wiki image links to Markdown links in the whole vault` | Rewrites wiki **image** links to Markdown links vault-wide. |
-| `Awesome Image: List images that are not linked by your notes` | Reports unused/orphan images. Read-only — it never deletes anything. |
+| `Awesome Image: List images that are not linked by your notes` | Reports unused/orphan images. Deleting is opt-in per row, re-checked before it runs, and goes to the trash. |
 
 Right-click a note or folder in the File Explorer for **`Export notes with referenced images`** (enable **Show export menu** first).
 
@@ -311,8 +312,35 @@ This is also the way to make image processing work in a vault that uses wiki ima
 ## Find unused (orphan) images
 
 `Awesome Image: List images that are not linked by your notes` scans the vault and reports images that no note references.
-It opens a dialog with **paths and file sizes**, lets you open an item or copy all paths, and **does not delete anything**.
-Deletion stays a manual, deliberate action — the command is a report, not a cleanup or rollback tool.
+It opens a dialog with **paths, file sizes and modification times**, lets you open an item, copy all paths, or select rows
+and **move them to the trash**.
+
+### Deleting orphaned images
+
+1. Tick the images you want to remove (the header checkbox selects all), then press **Delete selected**.
+2. The plugin **re-scans the vault before anything is deleted**. Images that a note started referencing after the list was
+   built are dropped from the selection and reported as skipped.
+3. A confirmation dialog lists exactly what will be trashed. Nothing is deleted until you confirm.
+4. Files are removed with Obsidian's own trash: the vault `.trash` folder or your system trash, depending on your
+   **Files & Links → Deleted files** setting — so you can restore them from there.
+
+Batch deletion is the one destructive action in this plugin. It is deliberately opt-in: nothing is ever deleted
+automatically, and the command never runs in the background.
+
+### What counts as a reference
+
+The scan reverses the vault link graph on demand — nothing runs in the background and no index is kept after the command
+finishes. That lets it recognize more than plain Markdown embeds:
+
+| Reference | Example |
+| --- | --- |
+| Markdown embed | `![](assets/img/7/4/c/74c2e1…png)` |
+| Markdown link | `[diagram](assets/img/7/4/c/74c2e1…png)` |
+| Wikilink embed | `![[74c2e1…png]]` |
+| Frontmatter link | `cover: "[[74c2e1…png]]"` |
+| Canvas node | an image placed on a `.canvas` board |
+
+The dialog footer reports how many references were indexed, which you can use to sanity-check the result.
 
 ---
 
@@ -345,6 +373,9 @@ generated media folder until you have restored links and confirmed that no notes
 3. Process one small test note and inspect both the note link and the created folders.
 4. Run the all-notes command only after the result is exactly what you expect.
 
+**Deleting orphaned images** is the exception: it is reversible through the trash. Recovery depends on your
+**Files & Links → Deleted files** setting, either the vault `.trash` folder or your operating system's trash.
+
 ---
 
 ## FAQ
@@ -360,7 +391,9 @@ the same picture pasted into ten notes is stored exactly once.
 Not directly for processing. Run `Convert wiki image links to Markdown links in the whole vault` first, then process.
 
 **How do I clean up unused images in my Obsidian vault?**
-Run `List images that are not linked by your notes`, review the reported paths and sizes, then delete them yourself.
+Run `List images that are not linked by your notes`, review the reported paths, sizes and dates, tick what you want gone,
+then press **Delete selected**. The plugin re-checks references first and moves the files to the trash, so you can
+restore them if you change your mind.
 
 **Can I undo a batch run?**
 There is no bulk undo. Restore from a vault backup, Git history, or Obsidian Sync version history.

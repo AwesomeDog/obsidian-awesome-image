@@ -116,8 +116,8 @@ export default class ImageToolkitPlugin extends Plugin {
       id: "list-orphan-images",
       name: "List images that are not linked by your notes",
       callback: async () => {
-        const orphans = await findOrphanImages(this);
-        new OrphanImagesModal(this.app, orphans).open();
+        const {orphans, index} = await findOrphanImages(this);
+        new OrphanImagesModal(this.app, orphans, index.describe()).open();
       },
     });
     this.registerEvent(this.app.workspace.on("file-menu", (menu, file, source) => {

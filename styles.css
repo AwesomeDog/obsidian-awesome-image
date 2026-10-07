@@ -356,6 +356,35 @@ body .oit-pin-container-view .img-default-background {
     border-bottom: 1px solid var(--background-modifier-border);
 }
 
+.awesome-image-orphan-summary {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.awesome-image-orphan-table th:first-child,
+.awesome-image-orphan-table td:first-child {
+    width: 1%;
+    padding-right: 4px;
+}
+
+.awesome-image-delete-modal {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.awesome-image-delete-note {
+    color: var(--text-muted);
+    font-size: var(--font-ui-smaller);
+}
+
+.awesome-image-delete-list {
+    max-height: 30vh;
+    overflow-y: auto;
+    padding-left: 20px;
+    font-size: var(--font-ui-smaller);
+    word-break: break-word;
+}
+
 .awesome-image-processing-failures-modal {
     max-height: 80vh;
     overflow-y: auto;
